@@ -25,3 +25,5 @@ Rubric
 	- Good MVC separation (3 points)
 	- HTML output passes validator (1 point)
 - Creative Portion (15 points)
+
+Approved by David Huang
