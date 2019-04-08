@@ -3,26 +3,25 @@ import logo from './logo.svg';
 import './App.css';
 
 class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
-    );
-  }
+	state = {runs: []}
+	componentDidMount() {
+		fetch("/runs")
+			.then(res => res.json())
+			.then(runs => this.setState({ runs }));
+	}
+
+	render() {
+		return (
+			<div className="App">
+				<h1>Runs:</h1>
+				<ol>
+					{this.state.runs.map(run => 
+						<li value={run.id}>{new Intl.DateTimeFormat("en-US").format(new Date(run.date))} at {run.location}</li>
+					)}
+				</ol>
+			</div>
+		);
+	}
 }
 
 export default App;
