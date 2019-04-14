@@ -1,25 +1,67 @@
 var express = require('express');
+const importFile = require('../parser');
 var router = express.Router();
+const {promisify} = require('util');
 
-/* GET users listing. */
+const fields = ["date", "location", "runofday"]
+
+function loadRunDetails(req, run) {
+	const getAsync = promisify(req.db.get).bind(req.db);
+	let result = {id: run};
+	return getAsync(`run:${run}:date`)
+		.then(datestr => { result.date = parseInt(datestr) })
+		.then(_ => getAsync(`run:${run}:location`))
+		.then(location => { result.location = location })
+		.then(_ => getAsync(`run:${run}:runofday`))
+		.then(runofday => { result.runofday = parseInt(runofday) })
+		.then(_ => result)
+}
+
+// Get listing of all runs
 router.get('/', function(req, res, next) {
-	res.send([
-		{id: 1, date: new Date(), location: "MOHELA", runofday: 1},
-		{id: 2, date: new Date(), location: "MOHELA", runofday: 2},
-		{id: 3, date: new Date(), location: "MOHELA", runofday: 3},
-		{id: 4, date: new Date(), location: "MOHELA", runofday: 4},
-		{id: 5, date: new Date(), location: "MOHELA", runofday: 5},
-		{id: 6, date: new Date(), location: "MOHELA", runofday: 6},
-		{id: 7, date: new Date(), location: "MOHELA", runofday: 7},
-		{id: 8, date: new Date(), location: "MOHELA", runofday: 8},
-	]);
+	const smembersAsync = promisify(req.db.smembers).bind(req.db);
+	const getAsync = promisify(req.db.get).bind(req.db);
+	let runids;
+	smembersAsync("runs")
+		.then(runs => Promise.all(runs.map(run => loadRunDetails(req, run))))
+		.then(results => res.send(results))
+		.catch(err => {console.warn(err); return res.status(500).send(err)});
 });
 
+// Upload a new run log file
+router.post('/', function (req, res) {
+	const setAsync = promisify(req.db.set).bind(req.db);
+	let id;
+	importFile(req.files.file.path, req.db)
+		.then((_id) => {
+			id = _id;
+			return setAsync(`run:${id}:location`, req.fields.location);
+		})
+		.then(() => setAsync(`run:${id}:runofday`, req.fields.runofday))
+		.then(() => {
+			res.status(201).location(`/api/runs/${id}`).send({ id });
+		})
+		.catch((error) => {
+			res.status(500).send({ error });
+		});
+});
+
+// Get details on a particular run
 router.get("/:runId", function(req, res) {
-	res.send({date: new Date(), location: "MOHELA", runofday: 1, data: [
-		{time: new Date(), rpm: 2500, coolant: 150},
-		{time: new Date(), cgaccelx: 0, cgaccely: -9.8, cgaccelz: 0},
-	]});
+	const smembersAsync = promisify(req.db.smembers).bind(req.db);
+	const hgetallAsync = promisify(req.db.hgetall).bind(req.db);
+	const getAsync = promisify(req.db.get).bind(req.db);
+	let result;
+	loadRunDetails(req, req.params.runId)
+		.then(details => {
+			result = details;
+		})
+		.then(_ => smembersAsync(`run:${req.params.runId}:data`))
+		.then(timestamps => Promise.all(timestamps.map(ts => hgetallAsync(`run:${req.params.runId}:data:${ts}`))))
+		.then(results => {
+			result.data = results;
+			return res.send(result)
+		})
 });
 
 module.exports = router;
