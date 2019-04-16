@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Button, Card, CardColumns } from 'react-bootstrap';
+import { handleClientAsyncError, handleServerError } from './util';
 
 export class Runs extends Component {
 	constructor(props) {
@@ -16,22 +17,22 @@ export class Runs extends Component {
 	reload() {
 		fetch(process.env.REACT_APP_API_SERVER + "/api/runs")
 			.then(res => res.json())
+			.then(handleServerError)
 			.then(runs => runs.sort((a, b) => a.date > b.date))
-			.then(runs => this.setState({ runs }));
+			.then(runs => this.setState({ runs }))
+			.catch(handleClientAsyncError);
 	}
 
 	deleteRun(id) {
 		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + id, {
 			method: "DELETE"
 		})
-		.then(resp => resp.json())
-		.then(_ => this.setState(state => {
-			state.runs = state.runs.filter(run => run.id !== id)
-			return state;
-		}))
-		.catch(error => {
-			alert("Failed to delete run");
+		.then((resp) => resp.json())
+		.then(handleServerError)
+		.then((result) => {
+			this.setState(state => ({ runs: state.runs.filter(run => run.id !== id)}))
 		})
+		.catch(handleClientAsyncError);
 	}
 
 	render() {

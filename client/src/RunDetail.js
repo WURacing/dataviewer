@@ -3,6 +3,7 @@ import { Card, CardColumns, Spinner, Jumbotron } from 'react-bootstrap';
 import { createFilterForVariable } from './filters';
 import ChartModal from './Chart';
 import './RunDetail.css';
+import { handleServerError, handleClientAsyncError } from './util';
 
 export class Run extends Component {
 	constructor(props) {
@@ -12,12 +13,15 @@ export class Run extends Component {
 		// download this run's data
 		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + props.id)
 			.then(res => res.json())
-			.then(run => this.load(run));
+			.then(handleServerError)
+			.then(run => this.load(run))
+			.catch(handleClientAsyncError);
 		// download global filters
 		fetch(process.env.REACT_APP_API_SERVER + "/api/filters")
-            .then(res => res.json())
-            .then(filters => this.setState({ filters }));
-
+			.then(res => res.json())
+			.then(handleServerError)
+			.then(filters => this.setState({ filters }))
+			.catch(handleClientAsyncError);
 	}
 	load(run) {
 		// get a set of the variables present in this log

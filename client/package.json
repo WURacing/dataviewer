@@ -1,13 +1,20 @@
 {
-	"name": "client",
-	"version": "0.1.0",
+	"name": "dataviewerclient",
+	"version": "0.0.1",
+	"description": "Engine Data Visualization Platform - Client Webapp",
+	"keywords": [
+		"data",
+		"visualization"
+	],
+	"homepage": "http://cse330.connormonahan.net/",
+	"license": "GPL-3.0",
+	"author": "Connor Monahan <cmonahan@wustl.edu> (https://connormonahan.net/)",
+	"repository": "bitbucket:cse330/spring2019-cp-group-457221",
 	"private": true,
 	"dependencies": {
 		"bootstrap": "^4.3.1",
-		"d3": "^5.9.2",
 		"react": "^16.8.6",
 		"react-bootstrap": "^1.0.0-beta.6",
-		"react-d3-library": "^1.1.8",
 		"react-dom": "^16.8.6",
 		"react-scripts": "2.1.8",
 		"recharts": "^1.5.0"

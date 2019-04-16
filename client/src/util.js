@@ -16,3 +16,17 @@ export function timeString(time) {
 	let ms = leftPad(time.getMilliseconds().toFixed(0), 4);
 	return `${hr}:${min}:${sec}:${ms}`;
 }
+
+export function handleClientAsyncError(error) {
+	alert("An error occured while processing your request. Please reload the page.");
+	console.error(error);
+}
+
+export function handleServerError(response) {
+	if (response.error) {
+		console.warn(response.error);
+		alert(response.error);
+	} else {
+		return response;
+	}
+}

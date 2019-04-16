@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Form, Card, Button, Table, CardColumns } from 'react-bootstrap';
+import { handleClientAsyncError, handleServerError } from './util';
 
 function filterEqn(filter) {
     return filter.name + " = " + Object.keys(filter.weights).map((vari) =>
@@ -20,7 +21,9 @@ export class Filter extends Component {
     reload() {
         fetch(process.env.REACT_APP_API_SERVER + "/api/filters")
             .then(res => res.json())
-            .then(filters => this.setState({ filters }));
+            .then(handleServerError)
+            .then(filters => this.setState({ filters }))
+            .catch(handleClientAsyncError);
     }
 
     handleSubmit(event) {
@@ -41,18 +44,20 @@ export class Filter extends Component {
         })
             .then(resp => resp.json())
             .then(data => {
-                // Reset form and reload display
-                this.reload();
-                this.nameRef.current.value = "";
-                this.setState(state => {
-                    state.filter.name = "";
-                    state.filter.weights = {};
-                    return state;
-                })
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    // Reset form and reload display
+                    this.reload();
+                    this.nameRef.current.value = "";
+                    this.setState(state => {
+                        state.filter.name = "";
+                        state.filter.weights = {};
+                        return state;
+                    })
+                }
             })
-            .catch(error => {
-                alert(error)
-            })
+            .catch(handleClientAsyncError)
             .finally(_ => {
                 this.setState({ loading: false })
             })
@@ -92,9 +97,7 @@ export class Filter extends Component {
                 // Reload displayu
                 this.reload();
             })
-            .catch(error => {
-                alert(error)
-            })
+            .catch(handleClientAsyncError)
             .finally(_ => {
                 this.setState({ loading: false })
             })
