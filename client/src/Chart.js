@@ -33,7 +33,8 @@ export class ChartModal extends Component {
 		// Load filters and calculate the LCs
 		state.title = "";
 		for (let filter of props.filters) {
-			calculateFilterValue(filter, state.data);
+			console.log(filter)
+			state.data = calculateFilterValue(filter, state.data);
 			state.title += filter.name + " and ";
 		}
 		state.title = state.title.substr(0, state.title.length - 5);
@@ -49,7 +50,7 @@ export class ChartModal extends Component {
 		})
 
 		// Simplify the line by pruning points. TODO use Ramer-Douglas-Peucker or some better alg.
-		const maxPoints = 500;
+		const maxPoints = 1000;
 		// unit of time between points to keep
 		const timeskip = (state.data[state.data.length - 1].time - state.data[0].time) / maxPoints;
 

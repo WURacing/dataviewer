@@ -3,6 +3,7 @@ import { Navbar, Nav, Breadcrumb } from 'react-bootstrap';
 import { Runs } from './Runs';
 import { Upload } from './UploadRun';
 import { Run } from './RunDetail';
+import { Filter } from './Filter';
 
 import './App.css';
 
@@ -14,6 +15,7 @@ class App extends Component {
 		this.openRun = this.openRun.bind(this);
 		this.openRuns = this.openRuns.bind(this);
 		this.openUpload = this.openUpload.bind(this);
+		this.openFilters = this.openFilters.bind(this);
 	}
 
 	render() {
@@ -26,6 +28,7 @@ class App extends Component {
 						<Nav className="mr-auto">
 						<Nav.Link href="#home" onClick={this.openRuns}>Runs</Nav.Link>
 						<Nav.Link onClick={this.openUpload}>Upload</Nav.Link>
+						<Nav.Link onClick={this.openFilters}>Filters</Nav.Link>
 					</Nav>
 					</Navbar.Collapse>
 				</Navbar>
@@ -37,6 +40,9 @@ class App extends Component {
 					{ this.state.mode === "upload" &&
 							<Breadcrumb.Item href="#" active>Upload</Breadcrumb.Item>
 					}
+					{ this.state.mode === "filters" &&
+							<Breadcrumb.Item href="#" active>Filters</Breadcrumb.Item>
+					}
 				</Breadcrumb>
 				<div className="content">
 				{ this.state.mode === "runs" &&
@@ -47,6 +53,9 @@ class App extends Component {
 				}
 				{ this.state.mode === "single" &&
 					<Run id={this.state.runid} />
+				}
+				{ this.state.mode === "filters" &&
+					<Filter />
 				}
 				</div>
 			</div>
@@ -68,6 +77,11 @@ class App extends Component {
 		this.setState({ mode: "upload" });
 	}
 
+	// switch to filters page
+	openFilters() {
+		this.setState({ mode: "filters" });
+	}
+	
 }
 
 export default App;

@@ -8,12 +8,16 @@ export class Run extends Component {
 	constructor(props) {
 		super(props);
 		this.state = { plot: [], showPlot: false };
-		this.plot = this.plot.bind(this);
 		this.closePlot = this.closePlot.bind(this);
 		// download this run's data
 		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + props.id)
 			.then(res => res.json())
 			.then(run => this.load(run));
+		// download global filters
+		fetch(process.env.REACT_APP_API_SERVER + "/api/filters")
+            .then(res => res.json())
+            .then(filters => this.setState({ filters }));
+
 	}
 	load(run) {
 		// get a set of the variables present in this log
@@ -31,9 +35,11 @@ export class Run extends Component {
 		variables = Array.from(variables).sort();
 		this.setState({ run, variables });
 	}
-	plot(variable) {
+	plotVariable(variable) {
 		let filter = createFilterForVariable(variable);
-		//let data = calculateFilterValue(filter, this.state.run.data);
+		return this.plotFilter(filter);
+	}
+	plotFilter(filter) {
 		this.setState((state, props) => {
 			let filters = state.plot.concat([filter]);
 			return { plot: filters, showPlot: true };
@@ -45,8 +51,13 @@ export class Run extends Component {
 		else
 			this.setState({ plot: [], showPlot: false })
 	}
+	filterList() {
+        return Object.keys(this.state.filters).map(filter => {
+            return { name: filter, weights: this.state.filters[filter] }
+        })
+    }
 	render() {
-		if (this.state.run) {
+		if (this.state.run && this.state.filters) {
 			return (
 				<div className="run">
 					{this.state.showPlot &&
@@ -55,15 +66,24 @@ export class Run extends Component {
 							<ChartModal filters={this.state.plot} data={this.state.run.data} onClose={this.closePlot} />
 						</div>
 					}
+					<h1>Available filters</h1>
+					<CardColumns>
+						{this.filterList().map(filter =>
+							<Card style={{ width: '18rem' }}>
+								<Card.Body>
+									<Card.Title>{filter.name}</Card.Title>
+									<Card.Link href="#plot" onClick={_ => this.plotFilter(filter)}>Plot</Card.Link>
+								</Card.Body>
+							</Card>
+						)}
+					</CardColumns>
 					<h1>Variables in this data</h1>
 					<CardColumns>
 						{this.state.variables.map(vari =>
 							<Card style={{ width: '18rem' }}>
 								<Card.Body>
-									<Card.Title>
-										{vari}
-									</Card.Title>
-									<Card.Link href="#plot" onClick={_ => this.plot(vari)}>Plot</Card.Link>
+									<Card.Title>{vari}</Card.Title>
+									<Card.Link href="#plot" onClick={_ => this.plotVariable(vari)}>Plot</Card.Link>
 								</Card.Body>
 							</Card>
 						)}

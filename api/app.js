@@ -7,6 +7,7 @@ const IncomingForm = require('formidable').IncomingForm;
 
 var indexRouter = require('./routes/index');
 var runsRouter = require('./routes/runs');
+var filtersRouter = require('./routes/filters');
 
 const redis = require('redis');
 const client = redis.createClient({prefix: 'creative:'});
@@ -14,7 +15,7 @@ const client = redis.createClient({prefix: 'creative:'});
 var app = express();
 
 app.use(logger('dev'));
-app.use(express.json());
+//app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -34,5 +35,6 @@ app.use(function fileUpload(req, res, next) {
 
 app.use('/', indexRouter);
 app.use('/api/runs', runsRouter);
+app.use('/api/filters', filtersRouter);
 
 module.exports = app;

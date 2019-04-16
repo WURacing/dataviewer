@@ -3,8 +3,6 @@ const importFile = require('../parser');
 var router = express.Router();
 const {promisify} = require('util');
 
-const fields = ["date", "location", "runofday"]
-
 function loadRunDetails(req, run) {
 	const getAsync = promisify(req.db.get).bind(req.db);
 	let result = {id: run};
@@ -20,8 +18,6 @@ function loadRunDetails(req, run) {
 // Get listing of all runs
 router.get('/', function(req, res, next) {
 	const smembersAsync = promisify(req.db.smembers).bind(req.db);
-	const getAsync = promisify(req.db.get).bind(req.db);
-	let runids;
 	smembersAsync("runs")
 		.then(runs => Promise.all(runs.map(run => loadRunDetails(req, run))))
 		.then(results => res.send(results))
@@ -50,7 +46,6 @@ router.post('/', function (req, res) {
 router.get("/:runId", function(req, res) {
 	const smembersAsync = promisify(req.db.smembers).bind(req.db);
 	const hgetallAsync = promisify(req.db.hgetall).bind(req.db);
-	const getAsync = promisify(req.db.get).bind(req.db);
 	let result;
 	loadRunDetails(req, req.params.runId)
 		.then(details => {
