@@ -1,3 +1,4 @@
+export const PREC = 5; // sig figs
 
 // left pads a string better than left-pad ever did
 export function leftPad(string, n) {

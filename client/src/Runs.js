@@ -37,8 +37,8 @@ export class Runs extends Component {
 	render() {
 		return (
 			<CardColumns>
-				{this.state.runs.map(run =>
-					<Card style={{ width: '18rem' }}>
+				{this.state.runs.map((run, index) =>
+					<Card key={`run${index}`} style={{ width: '18rem' }}>
 						<Card.Body>
 							<Card.Title>
 								{new Intl.DateTimeFormat("en-US").format(new Date(run.date))} Run {run.runofday}

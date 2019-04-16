@@ -71,8 +71,8 @@ export class Run extends Component {
 					</Jumbotron>
 					<h1>Available filters</h1>
 					<CardColumns>
-						{this.filterList().map(filter =>
-							<Card style={{ width: '18rem' }}>
+						{this.filterList().map((filter, index) =>
+							<Card key={`filter${index}`} style={{ width: '18rem' }}>
 								<Card.Body>
 									<Card.Title>{filter.name}</Card.Title>
 									<Card.Link href="#plot" onClick={_ => this.plotFilter(filter)}>Plot</Card.Link>
@@ -82,8 +82,8 @@ export class Run extends Component {
 					</CardColumns>
 					<h1>Variables in this data</h1>
 					<CardColumns>
-						{this.state.variables.map(vari =>
-							<Card style={{ width: '18rem' }}>
+						{this.state.variables.map((vari, index) =>
+							<Card key={`variable${index}`}  style={{ width: '18rem' }}>
 								<Card.Body>
 									<Card.Title>{vari}</Card.Title>
 									<Card.Link href="#plot" onClick={_ => this.plotVariable(vari)}>Plot</Card.Link>

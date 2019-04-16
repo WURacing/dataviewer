@@ -1,0 +1,9 @@
+.modal-btn-flex {
+    justify-content: space-between;
+    width: 100%;
+}
+
+.modal-btn-flex button {
+    max-width: 50em;
+    flex-grow: 0;
+}
