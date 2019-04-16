@@ -49,6 +49,9 @@ export class ChartModal extends Component {
 			return false;
 		})
 
+		// If no data points, we're done here
+		if (state.data.length < 2) return state;
+
 		// Fake continuity (probably needs a better solution like averaging, but this is O(n))
 		let prev = {};
 		for (let dp of state.data) {
