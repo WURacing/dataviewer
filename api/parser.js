@@ -11,6 +11,11 @@ class BatchTransform extends Transform {
 		this.line = {time: 0};
 	}
 	_transform(chunk, encoding, callback) {
+		if (chunk.hasOwnProperty("timestamp") && chunk.hasOwnProperty("sig_name") && chunk.hasOwnProperty("sig_val")) {
+			// parsed CAN file
+		} else {
+			return callback("Invalid file format");
+		}
 		if (!this.line.time) {
 			this.line.time = chunk.timestamp;
 		}
@@ -71,7 +76,19 @@ function importFile(path, client) {
 			let batcher = new BatchTransform();
 			let writer = new DatabaseWriter(client, id);
 			try {
-				file.pipe(parser).pipe(batcher).pipe(writer);
+				file.on('error', e => {
+					console.warn(e);
+					reject("File reading failed");
+				}).pipe(parser).on('error', e => {
+					console.warn(e);
+					reject("Parsing CSV data failed");
+				}).pipe(batcher).on('error', e => {
+					console.warn(e);
+					reject("Failed to extract signals from log file");
+				}).pipe(writer).on('error', e => {
+					console.warn(e);
+					reject("Database writing failed");
+				});
 			} catch (e) {
 				return reject(e);
 			}
