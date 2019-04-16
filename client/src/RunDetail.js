@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Card, CardColumns, Spinner } from 'react-bootstrap';
+import { Card, CardColumns, Spinner, Jumbotron } from 'react-bootstrap';
 import { createFilterForVariable } from './filters';
 import ChartModal from './Chart';
 import './RunDetail.css';
@@ -62,10 +62,13 @@ export class Run extends Component {
 				<div className="run">
 					{this.state.showPlot &&
 						<div>
-							<a className="anchor" href="#plot" name="plot">Plots</a>
 							<ChartModal filters={this.state.plot} data={this.state.run.data} onClose={this.closePlot} />
 						</div>
 					}
+					<Jumbotron>
+						<h1>Run {this.state.run.runofday} on {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.date))}</h1>
+						<p>Location: {this.state.run.location}</p>
+					</Jumbotron>
 					<h1>Available filters</h1>
 					<CardColumns>
 						{this.filterList().map(filter =>

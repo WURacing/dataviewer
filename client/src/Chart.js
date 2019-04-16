@@ -49,6 +49,13 @@ export class ChartModal extends Component {
 			return false;
 		})
 
+		// Fake continuity (probably needs a better solution like averaging, but this is O(n))
+		let prev = {};
+		for (let dp of state.data) {
+			Object.assign(prev, dp);
+			Object.assign(dp, prev);
+		}
+
 		// Simplify the line by pruning points. TODO use Ramer-Douglas-Peucker or some better alg.
 		const maxPoints = 1000;
 		// unit of time between points to keep
