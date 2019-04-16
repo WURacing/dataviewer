@@ -13,6 +13,7 @@ export function calculateFilterValue(filter, data) {
 		let value = filterNames.map(fname => filter.weights[fname] * elem[fname]).reduce((accum,val) => accum + val);
 		let nelem = {time: elem.time};
 		nelem[filter.name] = value;
+		data[filter.name] = value; // add LCs to original dataset
 		newData.push(nelem);
 	}
 	return newData;

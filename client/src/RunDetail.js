@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import { Card, CardColumns, Spinner } from 'react-bootstrap';
-import { createFilterForVariable, calculateFilterValue } from './filters';
+import { createFilterForVariable } from './filters';
 import ChartModal from './Chart';
 import './RunDetail.css';
 
 export class Run extends Component {
 	constructor(props) {
 		super(props);
-		this.state = {};
+		this.state = { plot: [], showPlot: false };
 		this.plot = this.plot.bind(this);
 		this.closePlot = this.closePlot.bind(this);
 		// download this run's data
@@ -28,42 +28,48 @@ export class Run extends Component {
 		// data is unsorted by default
 		run.data.sort((one, two) => one.time > two.time);
 		// JS sets only have limited utility
-		variables = Array.from(variables);
+		variables = Array.from(variables).sort();
 		this.setState({ run, variables });
 	}
 	plot(variable) {
 		let filter = createFilterForVariable(variable);
-		let data = calculateFilterValue(filter, this.state.run.data);
-		this.setState({ plot: {filter, data}});
+		//let data = calculateFilterValue(filter, this.state.run.data);
+		this.setState((state, props) => {
+			let filters = state.plot.concat([filter]);
+			return { plot: filters, showPlot: true };
+		});
 	}
-	closePlot() {
-		this.setState({ plot: undefined })
+	closePlot(keepAlive) {
+		if (keepAlive)
+			this.setState({ showPlot: false })
+		else
+			this.setState({ plot: [], showPlot: false })
 	}
 	render() {
 		if (this.state.run) {
-		return (
-			<div className="run">
-				{ this.state.plot &&
+			return (
+				<div className="run">
+					{this.state.showPlot &&
 						<div>
 							<a className="anchor" href="#plot" name="plot">Plots</a>
-							<ChartModal filter={this.state.plot.filter} data={this.state.plot.data} onClose={this.closePlot} />
+							<ChartModal filters={this.state.plot} data={this.state.run.data} onClose={this.closePlot} />
 						</div>
-				}
-				<h1>Variables in this data</h1>
-				<CardColumns>
-				{this.state.variables.map(vari =>
-					<Card style={{ width: '18rem' }}>
-						<Card.Body>
-							<Card.Title>
-									{vari}
-							</Card.Title>
-							<Card.Link href="#plot" onClick={_ => this.plot(vari)}>Plot</Card.Link>
-						</Card.Body>
-					</Card>
-				)}
-				</CardColumns>
-			</div>
-		);
+					}
+					<h1>Variables in this data</h1>
+					<CardColumns>
+						{this.state.variables.map(vari =>
+							<Card style={{ width: '18rem' }}>
+								<Card.Body>
+									<Card.Title>
+										{vari}
+									</Card.Title>
+									<Card.Link href="#plot" onClick={_ => this.plot(vari)}>Plot</Card.Link>
+								</Card.Body>
+							</Card>
+						)}
+					</CardColumns>
+				</div>
+			);
 		} else {
 			// display an animation while loading
 			return (

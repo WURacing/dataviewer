@@ -38,6 +38,7 @@ class App extends Component {
 							<Breadcrumb.Item href="#" active>Upload</Breadcrumb.Item>
 					}
 				</Breadcrumb>
+				<div className="content">
 				{ this.state.mode === "runs" &&
 					<Runs onOpenRun={this.openRun} />
 				}
@@ -47,6 +48,7 @@ class App extends Component {
 				{ this.state.mode === "single" &&
 					<Run id={this.state.runid} />
 				}
+				</div>
 			</div>
 		);
 	}
