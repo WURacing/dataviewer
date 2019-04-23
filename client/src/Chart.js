@@ -104,15 +104,15 @@ export class ChartModal extends Component {
 
 	// start making a selection
 	graphStartSelect(e) {
-		if (e.activeLabel) {
-			this.setState({ leftLabel: e.activeLabel })
+		if (e && e.activeLabel) {
+			this.setState({ leftLabel: e.activeLabel, rightLabel: defaultRight })
 			this.leftLabel = e.activeLabel;
 		}
 	}
 
 	// update right endpoint fo selection
 	graphMoveSelect(e) {
-		if (e.activeLabel && this.leftLabel) {
+		if (e && e.activeLabel && this.leftLabel) {
 			// only update the reference region occasionally or there will be unbearable lag
 			let now = new Date().getTime();
 			if (now > this.nextLabelUpdate) {
@@ -128,7 +128,10 @@ export class ChartModal extends Component {
 		this.setState((state, props) => {
 			let left = this.leftLabel;
 			let right = this.rightLabel;
-			if (right < left) {
+			if (!left || !right) {
+				left = defaultLeft;
+				right = defaultRight;
+			} else if (right < left) {
 				let tmp = left;
 				left = right;
 				right = tmp;
