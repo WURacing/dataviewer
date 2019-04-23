@@ -1,7 +1,12 @@
+import { filterData } from "./filters";
+
 export const PREC = 5; // sig figs
 
 // left pads a string better than left-pad ever did
 export function leftPad(string, n) {
+	if (typeof string === 'number') {
+		string = string.toFixed(0);
+	}
 	while (string.length < n) {
 		string = "0" + string;
 	}
@@ -29,4 +34,46 @@ export function handleServerError(response) {
 	} else {
 		return response;
 	}
+}
+
+/**
+ * 
+ * @param {{time: number, [key: string]: number}[]} data 
+ * @param {{name: string, weights: {[key: string]: number}}[]} filters 
+ */
+export function createSpreadsheet(data, filters) {
+	let lines = [];
+	const header = "time," + filters.reduce((accum, filter, index) => {
+		if (index < filters.length - 1) {
+			return accum + filter.name + ",";
+		} else {
+			return accum + filter.name;
+		}
+	}, "");
+	lines.push(header);
+	data = filterData(data, filters);
+	let last = {};
+	for (let dp of data) {
+		Object.assign(last, dp);
+		const line = dp.time.toFixed(0) + "," + filters.reduce((accum, filter, index) => {
+			let val;
+			if (dp.hasOwnProperty(filter.name)) {
+				val = dp[filter.name];
+			} else if (last.hasOwnProperty(filter.name)) {
+				// fake continuity
+				val = last[filter.name];
+			} else {
+				val = 0;
+			}
+			let string = val.toPrecision(PREC);
+			if (index < filters.length - 1) {
+				return accum + string + ",";
+			} else {
+				return accum + string;
+			}
+		}, "");
+		lines.push(line);
+	}
+	const file = lines.join("\r\n");
+	return btoa(file);
 }

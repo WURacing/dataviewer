@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
-import { Button, Modal, ButtonGroup } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceArea } from 'recharts';
-import { timeString, PREC } from './util';
-import { calculateFilterValue } from './filters';
+import { timeString, PREC, createSpreadsheet, leftPad } from './util';
 import './Chart.css';
+import { filterData } from './filters';
 
 const colors = ["red", "blue", "green", "purple", "orange", "gray", "gold", "indigo", "navy", "darkslategray"];
 function getColor(i) {
@@ -31,25 +31,28 @@ export class ChartModal extends Component {
 	}
 
 	update(state, props) {
-		state.data = props.data.slice();
 		state.filters = props.filters.slice();
 		// Load filters and calculate the LCs
-		state.title = "";
-		for (let filter of props.filters) {
-			state.data = calculateFilterValue(filter, state.data);
-			state.title += filter.name + " and ";
-		}
-		state.title = state.title.substr(0, state.title.length - 5);
-
-		// Delete points not relevant to either variable
-		state.data = state.data.filter(dp => {
-			for (let filter of props.filters) {
-				if (dp.hasOwnProperty(filter.name)) {
-					return true;
-				}
+		state.data = filterData(props.data, props.filters);
+		state.title = props.filters.reduce((accum, filter, index) => {
+			if (index < props.filters.length - 1) {
+				return accum + filter.name + " and ";
+			} else {
+				return accum + filter.name;
 			}
-			return false;
-		})
+		}, "");
+		let time = "";
+		if (state.data.length > 0) {
+			let start = new Date(state.data[0].time);
+			let end = new Date(state.data[state.data.length-1].time);
+			time += leftPad(start.getFullYear(), 4) + "-" + leftPad(start.getMonth()+1, 2) + "-" +
+				leftPad(start.getDate(), 2);
+			time += "_";
+			time += leftPad(start.getHours(), 2) + "-" + leftPad(start.getMinutes(), 2);
+			time += "_";
+			time += leftPad(end.getHours(), 2) + "-" + leftPad(end.getMinutes(), 2);
+		}
+		state.filename = "DATA_" + time + "_" + props.filters.map(filter => filter.name).join("-") + ".csv";
 
 
 		// Fake continuity (probably needs a better solution like averaging, but this is O(n))
@@ -187,7 +190,8 @@ export class ChartModal extends Component {
 
 				<Modal.Footer>
 					<div className="d-flex modal-btn-flex">
-						<Button variant="secondary" onClick={_ => this.props.onClose(false)}>Close</Button>
+					<Button variant="secondary" onClick={_ => this.props.onClose(false)}>Close</Button>
+					<Button variant="secondary" download={this.state.filename} href={"data:text/csv;base64," + createSpreadsheet(this.props.data, this.props.filters)} >Download CSV</Button>
 						{shouldZoom && <Button variant="secondary" onClick={_ => this.zoomOut()}>Zoom Out</Button>}
 						<Button variant="primary" onClick={_ => this.props.onClose(true)}>Add Variable</Button>
 					</div>

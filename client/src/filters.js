@@ -19,8 +19,9 @@ export function calculateFilterValue(filter, data) {
 		}).reduce((accum, val) => accum + val);
 
 		// duplicate point and set value
-		let nelem = Object.assign({}, elem);
+		let nelem = {};
 		nelem[filter.name] = value;
+		// return elem;
 		nelem.time = parseInt(elem.time);
 		return nelem;
 	})
@@ -30,4 +31,28 @@ export function createFilterForVariable(variable) {
 	let filter = {name: variable, weights: {}};
 	filter.weights[variable] = 1;
 	return filter;
+}
+
+/**
+ * 
+ * @param {{time: number, [key: string]: number}[]} data 
+ * @param {{name: string, weights: {[key: string]: number}}[]} filters 
+ */
+export function filterData(data, filters) {
+	let values = [];
+	// Load filters and calculate the LCs
+	for (let filter of filters) {
+		values = values.concat(calculateFilterValue(filter, data));
+	}
+	// Merge results
+	values = values.sort((a,b) => a.time > b.time);
+	data = [];
+	for (let item of values) {
+		if (data.length > 0 && data[data.length-1].time === item.time) {
+			Object.assign(data[data.length-1], item);
+		} else {
+			data.push(item);
+		}
+	}
+	return data;
 }
