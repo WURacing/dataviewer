@@ -11,7 +11,7 @@ router.post("/", (req, res) => {
 	const hmsetAsync = promisify(req.db.hmset).bind(req.db);
 	const saddAsync = promisify(req.db.sadd).bind(req.db);
 
-	const values = Object.keys(weights).reduce((arr, key) => arr.concat(key, weights[key]), []);
+	const values = Object.keys(weights).reduce((arr, key) => arr.concat(key, parseFloat(weights[key])), []);
 	if (values.length < 1) {
 		return res.status(400).send({ error: "At least 1 variable must be present in the weights" });
 	}

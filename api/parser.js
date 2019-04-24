@@ -1,8 +1,7 @@
 const csv = require("csv-parse");
 const fs = require("fs");
-const redis = require("redis");
+const { RedisClient } = require("redis");
 const { Writable, Transform } = require("stream");
-const {promisify} = require('util');
 
 
 class BatchTransform extends Transform {
@@ -65,6 +64,12 @@ class DatabaseWriter extends Writable {
 	}
 }
 
+/**
+ * Import a CSV file into the database
+ * @param {string} path Path to uploaded file (probably in /tmp)
+ * @param {RedisClient} client Database client
+ * @returns {Promise<number>} ID of newly added file
+ */
 function importFile(path, client) {
 	return new Promise((resolve, reject) => {
 		client.incr("run", (err, id) => {
