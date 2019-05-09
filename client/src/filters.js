@@ -45,7 +45,7 @@ export function filterData(data, filters) {
 		values = values.concat(calculateFilterValue(filter, data));
 	}
 	// Merge results
-	values = values.sort((a,b) => a.time > b.time);
+	values = values.sort((a,b) => a.time - b.time);
 	data = [];
 	for (let item of values) {
 		if (data.length > 0 && data[data.length-1].time === item.time) {

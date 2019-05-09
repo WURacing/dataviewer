@@ -18,7 +18,7 @@ export class Runs extends Component {
 		fetch(process.env.REACT_APP_API_SERVER + "/api/runs")
 			.then(res => res.json())
 			.then(handleServerError)
-			.then(runs => runs.sort((a, b) => a.date > b.date))
+			.then(runs => runs.sort((a, b) => a.date - b.date))
 			.then(runs => this.setState({ runs }))
 			.catch(handleClientAsyncError);
 	}
