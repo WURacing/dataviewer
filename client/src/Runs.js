@@ -45,7 +45,9 @@ export class Runs extends Component {
 								{new Intl.DateTimeFormat("en-US").format(new Date(run.date))} Run {run.runofday}
 							</Card.Title>
 							<Card.Text>
-								{new Intl.DateTimeFormat("en-US", {minute: "numeric", hour: "numeric", second: "numeric"}).format(new Date(run.date))} at {run.location}
+								<p>{new Intl.DateTimeFormat("en-US", {minute: "numeric", hour: "numeric", second: "numeric"}).format(new Date(run.date))} at {run.location}</p>
+								{ run.type && <p>{run.type} Run</p>}
+								{ run.description && <p>Note: {run.description}</p>}
 							</Card.Text>
 							<Button variant="primary" onClick={() => this.props.onOpenRun(run.id)}>View data</Button>
 							<Button variant="danger" onClick={() => this.deleteRun(run.id)}>Delete</Button>

@@ -20,6 +20,10 @@ function loadRunDetails(req, run) {
 		.then((datestr) => { result.date = parseInt(datestr) })
 		.then(() => getAsync(`run:${run}:location`))
 		.then((location) => { result.location = location })
+		.then(() => getAsync(`run:${run}:description`))
+		.then((description) => { result.description = description })
+		.then(() => getAsync(`run:${run}:type`))
+		.then((type) => { result.type = type })
 		.then(() => getAsync(`run:${run}:runofday`))
 		.then((runofday) => { result.runofday = parseInt(runofday) })
 		.then(() => result)
@@ -71,6 +75,36 @@ router.get("/:runId", function (req, res) {
 			res.status(500).send({ error });
 		})
 });
+
+router.patch("/:runId", (req, res) => {
+	/** @type {(key: string, value: string) => Promise<>} */
+	const setAsync = promisify(req.db.set).bind(req.db);
+	let id = parseInt(req.params.runId);
+	if (isNaN(id) || id < 0) {
+		return res.status(400).send({ error: "Invalid ID" })
+	}
+
+	let actions = [];
+	if (req.fields.description) {
+		let description = req.fields.description;
+		actions.push(setAsync(`run:${id}:description`, description));
+	}
+	if (req.fields.location) {
+		let location = req.fields.location;
+		actions.push(setAsync(`run:${id}:location`, location));
+	}
+	if (req.fields.type) {
+		let type = req.fields.type;
+		actions.push(setAsync(`run:${id}:type`, type));
+	}
+	Promise.all(actions)
+	.then((results) => {
+		res.status(200).send({ id });
+	})
+	.catch((error) => {
+		res.status(500).send({ error });
+	})
+})
 
 // Delete a run
 router.delete("/:runId", (req, res) => {

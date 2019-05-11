@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Card, CardColumns, Spinner, Jumbotron } from 'react-bootstrap';
+import { Card, CardColumns, Spinner, Jumbotron, Form, Button } from 'react-bootstrap';
 import { createFilterForVariable } from './filters';
 import ChartModal from './Chart';
 import './RunDetail.css';
@@ -8,7 +8,7 @@ import { handleServerError, handleClientAsyncError } from './util';
 export class Run extends Component {
 	constructor(props) {
 		super(props);
-		this.state = { plot: [], showPlot: false };
+		this.state = { loading: false, plot: [], showPlot: false };
 		this.closePlot = this.closePlot.bind(this);
 		// download this run's data
 		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + props.id)
@@ -59,7 +59,39 @@ export class Run extends Component {
         return Object.keys(this.state.filters).map(filter => {
             return { name: filter, weights: this.state.filters[filter] }
         })
-    }
+	}
+
+	handleSubmit(event) {
+		event.preventDefault();
+
+		this.setState({ loading: true });
+
+		let data = {
+			type: this.typeRef.value,
+			description: this.descRef.value,
+		};
+
+		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + this.props.id, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    this.setState({ saved: true })
+                }
+            })
+            .catch(handleClientAsyncError)
+            .finally(_ => {
+                this.setState({ loading: false })
+            })
+	}
+
 	render() {
 		if (this.state.run && this.state.filters) {
 			return (
@@ -72,6 +104,32 @@ export class Run extends Component {
 					<Jumbotron>
 						<h1>Run {this.state.run.runofday} on {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.date))}</h1>
 						<p>Location: {this.state.run.location}</p>
+						<Form onSubmit={this.handleSubmit.bind(this)}>
+							<Form.Group controlId="editRun.type">
+								<Form.Label>Run Type</Form.Label>
+								<Form.Control as="select" ref={node => this.typeRef = node}
+								defaultValue={this.state.run.type} onChange={_ => this.setState({ saved: false })}>
+									<option>Acceleration</option>
+									<option>Autocross</option>
+									<option>Skidpad</option>
+									<option>Brake</option>
+									<option>Endurance</option>
+									<option>Everything</option>
+									<option>Misc Testing</option>
+								</Form.Control>
+							</Form.Group>
+							<Form.Group controlId="editRun.description">
+								<Form.Label>Run Description</Form.Label>
+								<Form.Control type="text" placeholder="Driver Name, Run #"
+								ref={node => this.descRef = node}
+								defaultValue={this.state.run.description}
+								onChange={_ => this.setState({ saved: false })}
+								/>
+							</Form.Group>
+							<Button variant="primary" type="submit" disabled={this.state.loading}>Save</Button>
+							{this.state.loading && <Spinner animation="border" role="status" />}
+							{this.state.saved && <p>Saved.</p>}
+						</Form>
 					</Jumbotron>
 					<h1>Available filters</h1>
 					<CardColumns>

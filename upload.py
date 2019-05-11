@@ -4,7 +4,7 @@ import csv
 import re
 import requests
 
-location = "Emerson"
+location = "Michigan International Speedway"
 runpattern = re.compile(r"RUN(\d+).+")
 
 for file in glob.glob("RUN*.csv"):
