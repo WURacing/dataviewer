@@ -6,7 +6,7 @@
 		"data",
 		"visualization"
 	],
-	"homepage": "http://cse330.connormonahan.net/~connor/data/",
+	"homepage": "//apps.connor.money/data/",
 	"license": "GPL-3.0",
 	"author": "Connor Monahan <cmonahan@wustl.edu> (https://connormonahan.net/)",
 	"repository": "bitbucket:cse330/spring2019-cp-group-457221",

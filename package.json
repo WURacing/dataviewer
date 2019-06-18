@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "pushd client; npm run build; popd; npm pack ./api",
-    "deploy": "rsync -r -a -v -e ssh --delete client/build/ cse330.connormonahan.net:public_html/data"
+    "deploy": "rsync -r -a -v -e ssh --delete client/build/ root@server.connor.money:/var/www/apps/data"
   },
   "repository": {
     "type": "git",
