@@ -22,7 +22,7 @@ export function calculateFilterValue(filter, data) {
 		let nelem = {};
 		nelem[filter.name] = value;
 		// return elem;
-		nelem.time = parseInt(elem.time);
+		nelem.time = new Date(elem.time).getTime();
 		return nelem;
 	})
 }

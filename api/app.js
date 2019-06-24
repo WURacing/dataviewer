@@ -5,12 +5,20 @@ var logger = require('morgan');
 var cors = require('cors');
 const IncomingForm = require('formidable').IncomingForm;
 var SSE = require('express-sse');
+var compression = require('compression');
 
 var runsRouter = require('./routes/runs');
 var filtersRouter = require('./routes/filters');
 
-const redis = require('redis');
-const client = redis.createClient({prefix: 'creative:'});
+const mariadb = require('mariadb');
+const pool = mariadb.createPool({
+     host: '127.0.0.1', 
+     user: 'connor', 
+	 password: process.env.DATA_PASS,
+	 database: 'apps',
+	 connectionLimit: 5,
+	 timezone: 'UTC'
+});
 
 var app = express();
 var sse = new SSE();
@@ -20,9 +28,18 @@ app.use(logger('dev'));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors());
+app.use(compression());
 app.use(function addDatabase(req, res, next) {
-	req.db = client;
-	next();
+	pool.getConnection().then(conn => {
+		req.db = conn;
+		res.on('finish', function removeDatabase() {
+			conn.end();
+		})
+		next();
+	})
+	.catch((error) => {
+		next(error);
+	})
 });
 app.use(function fileUpload(req, res, next) {
 	let form = new IncomingForm();

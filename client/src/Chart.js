@@ -60,7 +60,6 @@ export class ChartModal extends Component {
 		for (let dp of state.data) {
 			Object.assign(prev, dp);
 			Object.assign(dp, prev);
-			dp.time = parseInt(dp.time);
 		}
 
 		const shouldZoom = Number.isInteger(state.zoom.left) && Number.isInteger(state.zoom.right);

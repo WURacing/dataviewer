@@ -32,11 +32,9 @@ function loadRunDetails(req, run) {
 // Get listing of all runs
 router.get('/', function (req, res) {
 	/** @type {(key: string) => Promise<string[]>} */
-	const smembersAsync = promisify(req.db.smembers).bind(req.db);
-	smembersAsync("runs")
-		.then((runs) => Promise.all(runs.map(run => loadRunDetails(req, run))))
-		.then((results) => {
-			res.status(200).send(results)
+	req.db.query("SELECT id, location, description, type, runofday, start AS date FROM datarunmeta ORDER BY start ASC")
+		.then((rows) => {
+			res.status(200).send(rows)
 		})
 		.catch((error) => {
 			res.status(500).send({ error })
@@ -60,20 +58,42 @@ router.post('/', function (req, res) {
 
 // Get details on a particular run
 router.get("/:runId", function (req, res) {
-	/** @type {(key: string) => Promise<string[]>} */
-	const smembersAsync = promisify(req.db.smembers).bind(req.db);
-	/** @type {(key: string) => Promise<{[key: string]: string}>} */
-	const hgetallAsync = promisify(req.db.hgetall).bind(req.db);
-	loadRunDetails(req, req.params.runId)
-		.then((result) => smembersAsync(`run:${req.params.runId}:data`)
-			.then((timestamps) => Promise.all(timestamps.map(ts => hgetallAsync(`run:${req.params.runId}:data:${ts}`))))
-			.then((results) => {
-				result.data = results;
-				res.status(200).send(result)
-			}))
-		.catch((error) => {
-			res.status(500).send({ error });
+	let id = parseInt(req.params.runId)
+
+	req.db.query("SELECT location, description, type, runofday, start, end FROM datarunmeta WHERE id = ? LIMIT 1", [id])
+		.then((rows) => {
+			if (rows.length !== 1) {
+				res.status(404).send({ error: "Run not found" })
+				return;
+			}
+			let meta = rows[0]
+			meta.id = id;
+			meta.date = meta.start;
+			meta.data = [];
+			return req.db.query("SELECT `time`, `value`, `datavariables`.`name` AS var from datapoints join datavariables on datapoints.variable = datavariables.id where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end])
+			.then((data) => {
+				if (data.length < 1) {
+					res.status(404).send({ error: "No data found for run" })
+					return;
+				}
+				// combine data points with the same time
+				let dp = { time: 0 };
+				for (row of data) {
+					if (dp.time != 0 && row.time.getTime() !== dp.time.getTime()) {
+						// push old data to array first
+						meta.data.push(dp);
+						dp = { time: 0 };
+					}
+					dp.time = row.time;
+					dp[row.var] = row.value;
+				}
+				res.status(200).send(meta)
+			})
 		})
+		.catch((error) => {
+			res.status(500).send({ error })
+		});
+
 });
 
 router.patch("/:runId", (req, res) => {
@@ -113,10 +133,7 @@ router.delete("/:runId", (req, res) => {
 		return res.status(400).send({ error: "Invalid ID" })
 	}
 
-	/** @type {(key: string, entry: string) => Promise<>} */
-	const srem = promisify(req.db.srem).bind(req.db);
-
-	srem("runs", id) // TODO actually delete data
+	req.db.query("DELETE FROM datarunmeta WHERE id = ?", [id])
 		.then(() => {
 			res.status(200).send({ id });
 		})
