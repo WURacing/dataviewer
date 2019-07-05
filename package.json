@@ -1,25 +1,30 @@
 {
   "name": "dataviewer",
-  "version": "0.0.1",
-  "description": "Engine Data Visualization Platform",
-  "main": " ",
-  "directories": {
-    "test": "test"
-  },
+  "version": "0.1.0",
+  "description": "WashU Racing Data Visualization Platform",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "pushd client; npm run build; popd; npm pack ./api",
-    "deploy": "rsync -r -a -v -e ssh --delete client/build/ root@server.connor.money:/var/www/apps/data"
+    "build": "webpack --mode production",
+    "start": "webpack-dev-server --mode development"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://cmonahan21@bitbucket.org/cse330/spring2019-cp-group-457221.git"
+    "url": "https://github.com/WURacing/dataviewer.git"
   },
-  "author": "Connor Monahan <cmonahan@wustl.edu> (https://connormonahan.net/)",
-  "license": "GPL-3.0",
-  "homepage": "https://bitbucket.org/cse330/spring2019-cp-group-457221#readme",
+  "author": "Connor Monahan <cmonahan@wustl.edu>, Ethan Shry <ethan.shry@wustl.edu>",
+  "license": "Apache 2.0",
+  "homepage": "https://github.com/WURacing/dataviewer",
   "dependencies": {
-    "dataviewerapi": "file:api",
-    "dataviewerclient": "file:client"
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.0",
+    "@babel/preset-env": "^7.5.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.6",
+    "webpack": "^4.35.2",
+    "webpack-cli": "^3.3.5",
+    "webpack-dev-server": "^3.7.2"
   }
 }

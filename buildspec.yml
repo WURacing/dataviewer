@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo installing npm dependencies
+      - npm install
+  build:
+    commands:
+      - echo building app...
+      - npm run build
+      - echo app build successful
+
+artifacts:
+  files:
+    - dist/*
+  discard-paths: yes
