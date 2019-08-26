@@ -1,2 +1,14 @@
 {
+    "theme": {
+        "accentLight": "##c9181c",
+        "accent": "#b11e21",
+        "accentDark": "#932224",
+        "gray1": "#fafafa",
+        "gray2": "#dedede",
+        "gray3": "#afafaf",
+        "gray4": "#232323",
+        "gray5": "#0f0f0f",
+        "green": "#69de3b",
+        "blue": "#00a6ff"
+    }
 }
