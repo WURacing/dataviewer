@@ -43,15 +43,14 @@ router.get('/', function (req, res) {
 
 // Upload a new run log file
 router.post('/', function (req, res) {
-	/** @type {(key: string, value: string) => Promise<>} */
-	const setAsync = promisify(req.db.set).bind(req.db);
 	importFile(req.files.file.path, req.db)
-		.then((id) => setAsync(`run:${id}:location`, req.fields.location)
-			.then(() => setAsync(`run:${id}:runofday`, req.fields.runofday))
-			.then(() => {
-				res.status(201).location(`/api/runs/${id}`).send({ id });
-			}))
+		.then((id) => this.db.query("UPDATE datarunmeta SET location = ?, runofday = ? WHERE id = ?",
+			[req.fields.location, req.fields.runofday, id]))
+		.then(() => {
+			res.status(201).location(`/api/runs/${id}`).send({ id });
+		})
 		.catch((error) => {
+			console.log(error)
 			res.status(500).send({ error });
 		});
 });
@@ -98,7 +97,6 @@ router.get("/:runId", function (req, res) {
 
 router.patch("/:runId", (req, res) => {
 	/** @type {(key: string, value: string) => Promise<>} */
-	const setAsync = promisify(req.db.set).bind(req.db);
 	let id = parseInt(req.params.runId);
 	if (isNaN(id) || id < 0) {
 		return res.status(400).send({ error: "Invalid ID" })
@@ -107,15 +105,15 @@ router.patch("/:runId", (req, res) => {
 	let actions = [];
 	if (req.fields.description) {
 		let description = req.fields.description;
-		actions.push(setAsync(`run:${id}:description`, description));
+		actions.push(req.db.query("UPDATE datarunmeta SET description = ? WHERE id = ?", [description, id]));
 	}
 	if (req.fields.location) {
 		let location = req.fields.location;
-		actions.push(setAsync(`run:${id}:location`, location));
+		actions.push(req.db.query("UPDATE datarunmeta SET location = ? WHERE id = ?", [location, id]));
 	}
 	if (req.fields.type) {
 		let type = req.fields.type;
-		actions.push(setAsync(`run:${id}:type`, type));
+		actions.push(req.db.query("UPDATE datarunmeta SET type = ? WHERE id = ?", [type, id]));
 	}
 	Promise.all(actions)
 	.then((results) => {
