@@ -17,6 +17,7 @@
 	},
 	"dependencies": {
 		"@cmonahan/cantools": "0.0.1",
+		"@wuracing/dbc": "https://github.com/WURacing/DBC/archive/2019.1.0.tar.gz",
 		"cookie-parser": "~1.4.3",
 		"cors": "^2.8.5",
 		"csv": "^5.1.1",

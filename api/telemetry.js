@@ -1,10 +1,11 @@
 const can = require("@cmonahan/cantools");
+const dbc = require("@wuracing/dbc");
 
 class TelemetryServer {
     constructor(app) {
         this.app = app;
         this.handleIncoming = this.handleIncoming.bind(this);
-        this.dbc = can.database.load_file("./CANBus19.dbc");
+        this.dbc = can.database.load_file(require.resolve("@wuracing/dbc/" + dbc.dbcfile));
     }
 
     /**
