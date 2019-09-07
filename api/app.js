@@ -4,6 +4,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
 const IncomingForm = require('formidable').IncomingForm;
+var SSE = require('express-sse');
 
 var runsRouter = require('./routes/runs');
 var filtersRouter = require('./routes/filters');
@@ -12,6 +13,7 @@ const redis = require('redis');
 const client = redis.createClient({prefix: 'creative:'});
 
 var app = express();
+var sse = new SSE();
 
 app.use(logger('dev'));
 //app.use(express.json()); // handled by formidable library below instead
@@ -33,5 +35,10 @@ app.use(function fileUpload(req, res, next) {
 
 app.use('/api/runs', runsRouter);
 app.use('/api/filters', filtersRouter);
+app.get('/api/telemetry', sse.init);
+
+app.postTelemetryMessage = function(key, value) {
+	sse.send({key, value});
+};
 
 module.exports = app;
