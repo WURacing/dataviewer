@@ -4,7 +4,7 @@ import csv
 import re
 import requests
 
-location = "Michigan International Speedway"
+location = "UNKNOWN"
 runpattern = re.compile(r"RUN(\d+).+")
 
 for file in glob.glob("RUN*.csv"):
@@ -21,7 +21,7 @@ for file in glob.glob("RUN*.csv"):
         with open(file, "rb") as fd:
             print(file)
             print(no)
-            r = requests.post("http://cse330.connormonahan.net/api/runs",
+            r = requests.post("http://apps.connor.money/data/api/runs",
                 files={"file": fd}, data={"location": location, "runofday": no})
             if r.status_code != 201:
                 print(r.text)
