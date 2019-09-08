@@ -22,15 +22,15 @@ export class Telemetry extends Component {
         return <div>
             { this.state.connection === 0 && <p>Waiting for first message...</p>}
             { this.state.connection === 2 && <p>Disconnected from server</p>}
-            { this.state.error && <p>Error!</p>}
+            { this.state.error && <p>Error! Please reload the page.</p>}
             <ul>{Object.keys(this.state.data).map(key =>
                 <li>{key}: {this.state.data[key]}</li>
             )}</ul>
         </div>;
     }
 
+    // Called for each individual signal update
     listener(msg) {
-        console.log(msg)
         let data = JSON.parse(msg.data);
         this.setState(state => {
             state.data[data.key] = data.value;
@@ -38,6 +38,7 @@ export class Telemetry extends Component {
         });
     }
 
+    // Listeners for changes to SSE stream
     opened() {
         this.setState({ connection: this.es.readyState });
     }
