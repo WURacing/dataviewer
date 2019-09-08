@@ -14,6 +14,9 @@ def send_packets(source, target, frequency):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     first_queue_ts = None
     queue = None
+    accounting = 0
+    start = datetime.datetime.now()
+    now = None
     for packet in source:
         # Queue packets to transmit at the defined frequency.
         if queue is None:
@@ -40,8 +43,10 @@ def send_packets(source, target, frequency):
             print(msg)
             # Transmit datagram
             sock.sendto(msg, target)
+            accounting += len(msg) + 28
             # Clean up
             queue = None
+    print(f"This {(now-start).seconds}s transmission used about {accounting/1000:.3f}kB of data, costing ${accounting/1000000*0.40:.2f}.")
         
 
 # RTC on car is set in Central Daylight Time (UTC-5)
