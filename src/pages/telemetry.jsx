@@ -4,7 +4,7 @@ class Telemetry extends Component {
   render() {
     return (
         <div>
-            "Here is Telemetry"
+            "Telemetry"
         </div>
     );
   }

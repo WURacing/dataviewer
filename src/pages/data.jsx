@@ -4,7 +4,7 @@ class Data extends Component {
   render() {
     return (
         <div>
-            "Here is Data"
+            "Data"
         </div>
     );
   }
