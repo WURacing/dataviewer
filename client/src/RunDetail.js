@@ -56,9 +56,7 @@ export class Run extends Component {
 			this.setState({ plot: [], showPlot: false })
 	}
 	filterList() {
-        return Object.keys(this.state.filters).map(filter => {
-            return { name: filter, weights: this.state.filters[filter] }
-        })
+        return this.state.filters
 	}
 
 	handleSubmit(event) {
@@ -133,7 +131,7 @@ export class Run extends Component {
 					</Jumbotron>
 					<h1>Available filters</h1>
 					<CardColumns>
-						{this.filterList().map((filter, index) =>
+						{this.state.filters.map((filter, index) =>
 							<Card key={`filter${index}`} style={{ width: '18rem' }}>
 								<Card.Body>
 									<Card.Title>{filter.name}</Card.Title>

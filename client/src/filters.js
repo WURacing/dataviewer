@@ -1,22 +1,22 @@
+import { create, all } from 'mathjs'
+const math = create(all);
 
 // filter: {name: __, weights: {sigName: weight}}
 // find linear combination
 export function calculateFilterValue(filter, data) {
-	let filterNames = Object.keys(filter.weights);
+	const code = math.compile(filter.expression);
+
+	// let filterNames = Object.keys(filter.weights);
 	data = data.filter(elem => {
-		let included = filterNames.filter(fname => elem.hasOwnProperty(fname))
-		if (included.length !== filterNames.length) {
-			return false; // not all variables are present at this time
+		try {
+			code.evaluate(elem);
+		} catch (e) {
+			return false;
 		}
 		return true;
 	})
 	return data.map(elem => {
-		// dot product of weight and X
-		let value = filterNames.map(fname => {
-			let weight = parseFloat(filter.weights[fname]);
-			let x = parseFloat(elem[fname]);
-			return weight * x;
-		}).reduce((accum, val) => accum + val);
+		let value = code.evaluate(elem);
 
 		// duplicate point and set value
 		let nelem = {};
@@ -28,9 +28,7 @@ export function calculateFilterValue(filter, data) {
 }
 
 export function createFilterForVariable(variable) {
-	let filter = {name: variable, weights: {}};
-	filter.weights[variable] = 1;
-	return filter;
+	return {name: variable, expression: variable};
 }
 
 /**
