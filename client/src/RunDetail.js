@@ -10,8 +10,9 @@ export class Run extends Component {
 		super(props);
 		this.state = { loading: false, plot: [], showPlot: false };
 		this.closePlot = this.closePlot.bind(this);
+
 		// download this run's data
-		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + props.id)
+		fetch(this.getRunURL())
 			.then(res => res.json())
 			.then(handleServerError)
 			.then(run => this.load(run))
@@ -22,6 +23,22 @@ export class Run extends Component {
 			.then(handleServerError)
 			.then(filters => this.setState({ filters }))
 			.catch(handleClientAsyncError);
+	}
+	getRunTechnicalType() {
+		let props = this.props;
+		if (typeof(props.id) == 'object' && props.id.hasOwnProperty("start")) {
+			return "range";
+		} else {
+			return "single";
+		}
+	}
+	getRunURL() {
+		let props = this.props;
+		if (this.getRunTechnicalType() == "range") {
+			return process.env.REACT_APP_API_SERVER + `/api/runs/range/${props.id.start.toISOString()}/${props.id.end.toISOString()}`;
+		} else {
+			return process.env.REACT_APP_API_SERVER + `/api/runs/${props.id}`;
+		}
 	}
 	load(run) {
 		// get a set of the variables present in this log
@@ -101,6 +118,7 @@ export class Run extends Component {
 					}
 					<Jumbotron>
 						<h1>Run {this.state.run.runofday} on {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.date))}</h1>
+						{this.getRunTechnicalType() == "single" && <>
 						<p>Location: {this.state.run.location}</p>
 						<Form onSubmit={this.handleSubmit.bind(this)}>
 							<Form.Group controlId="editRun.type">
@@ -128,6 +146,7 @@ export class Run extends Component {
 							{this.state.loading && <Spinner animation="border" role="status" />}
 							{this.state.saved && <p>Saved.</p>}
 						</Form>
+						</>}
 					</Jumbotron>
 					<h1>Available filters</h1>
 					<CardColumns>

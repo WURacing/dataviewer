@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Alert, Button, Card, CardColumns } from 'react-bootstrap';
+import { Alert, Button, Card, CardColumns, Form, Row, Col } from 'react-bootstrap';
 import { handleClientAsyncError, handleServerError } from './util';
 
 export class Runs extends Component {
@@ -35,6 +35,12 @@ export class Runs extends Component {
 		.catch(handleClientAsyncError);
 	}
 
+	setDate(e) {
+		let start = new Date(e.target.value + " 00:00:00");
+		let end = new Date(e.target.value + " 23:59:59");
+		this.props.onOpenRun({ start, end });
+	}
+
 	render() {
 		return (
 			<>
@@ -42,6 +48,14 @@ export class Runs extends Component {
 				Update 9/15/19: filters are now any expressible function - not just linear combinations. i.e. you can use sin/cos/sqrt/etc
 				as part of the filters now. However, this does mean you need to re-create all your old filters.
 			</Alert>
+			<Form>
+				<Form.Group as={Row} controlId="formDate">
+					<Form.Label column sm={5}>View all data for a specific date:</Form.Label>
+					<Col sm={7}>
+						<Form.Control type="date" placeholder="Date" onChange={e => this.setDate(e)} />
+					</Col>
+				</Form.Group>
+			</Form>
 			<CardColumns>
 				{this.state.runs.map((run, index) =>
 					<Card key={`run${index}`} style={{ width: '18rem' }}>
