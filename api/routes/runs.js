@@ -41,9 +41,7 @@ function combineDP(data, varmap) {
 			dp = { time: 0 };
 		}
 		dp.time = row.time;
-		if (!!varmap && varmap.hasOwnProperty(row.var))
-			row.var = varmap[row.var];
-		dp[row.var] = row.value;
+		dp[varmap[row.variable]] = row.value;
 	}
 	return newdata;
 }
