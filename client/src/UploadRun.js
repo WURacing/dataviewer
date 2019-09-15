@@ -41,6 +41,7 @@ export class Upload extends Component {
 	}
 
 	handleSubmit(event) {
+		event.preventDefault();
 		if (this.state.loading) return;
 		let file = this.fileRef.current.files[0];
 		let formData = new FormData();

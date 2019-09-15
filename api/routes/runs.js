@@ -44,11 +44,11 @@ router.get('/', function (req, res) {
 // Upload a new run log file
 router.post('/', function (req, res) {
 	importFile(req.files.file.path, req.db)
-		.then((id) => this.db.query("UPDATE datarunmeta SET location = ?, runofday = ? WHERE id = ?",
-			[req.fields.location, req.fields.runofday, id]))
+		.then((id) => req.db.query("UPDATE datarunmeta SET location = ?, runofday = ? WHERE id = ?",
+			[req.fields.location, req.fields.runofday, id])
 		.then(() => {
 			res.status(201).location(`/api/runs/${id}`).send({ id });
-		})
+		}))
 		.catch((error) => {
 			console.log(error)
 			res.status(500).send({ error });
