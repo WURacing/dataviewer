@@ -3,31 +3,6 @@ const importFile = require('../parser');
 var router = express.Router();
 const { promisify } = require('util');
 
-/**
- * Load metadata for a run
- * @param {Request} req HTTP client request
- * @param {number} run Run ID
- * @returns {Promise<{id: number, date: number, location: string, runofday: number}>} Run details
- */
-function loadRunDetails(req, run) {
-	run = parseInt(run);
-	if (isNaN(run) || run < 0) {
-		return Promise.reject("Run should be an integer in [0, inf]");
-	}
-	const getAsync = promisify(req.db.get).bind(req.db);
-	let result = { id: run };
-	return getAsync(`run:${run}:date`)
-		.then((datestr) => { result.date = parseInt(datestr) })
-		.then(() => getAsync(`run:${run}:location`))
-		.then((location) => { result.location = location })
-		.then(() => getAsync(`run:${run}:description`))
-		.then((description) => { result.description = description })
-		.then(() => getAsync(`run:${run}:type`))
-		.then((type) => { result.type = type })
-		.then(() => getAsync(`run:${run}:runofday`))
-		.then((runofday) => { result.runofday = parseInt(runofday) })
-		.then(() => result)
-}
 
 // Get listing of all runs
 router.get('/', function (req, res) {
@@ -55,11 +30,42 @@ router.post('/', function (req, res) {
 		});
 });
 
+function combineDP(data, varmap) {
+	// combine data points with the same time
+	let dp = { time: 0 };
+	let newdata = [];
+	for (row of data) {
+		if (dp.time != 0 && row.time.getTime() !== dp.time.getTime()) {
+			// push old data to array first
+			newdata.push(dp);
+			dp = { time: 0 };
+		}
+		dp.time = row.time;
+		if (!!varmap && varmap.hasOwnProperty(row.var))
+			row.var = varmap[row.var];
+		dp[row.var] = row.value;
+	}
+	return newdata;
+}
+
+function readVars(db) {
+	return db.query("SELECT id, name FROM datavariables").then((varlist) => {
+		let varmap = {};
+		for (let varline of varlist) {
+			varmap[varline.id] = varline.name;
+		}
+		return varmap;
+	})
+}
+
 // Get details on a particular run
 router.get("/:runId", function (req, res) {
 	let id = parseInt(req.params.runId)
 
-	req.db.query("SELECT location, description, type, runofday, start, end FROM datarunmeta WHERE id = ? LIMIT 1", [id])
+	let varmap;
+
+	readVars(req.db).then((map) => { varmap = map; return varmap; })
+		.then(() => req.db.query("SELECT location, description, type, runofday, start, end FROM datarunmeta WHERE id = ? LIMIT 1", [id]))
 		.then((rows) => {
 			if (rows.length !== 1) {
 				res.status(404).send({ error: "Run not found" })
@@ -68,24 +74,13 @@ router.get("/:runId", function (req, res) {
 			let meta = rows[0]
 			meta.id = id;
 			meta.date = meta.start;
-			meta.data = [];
-			return req.db.query("SELECT `time`, `value`, `datavariables`.`name` AS var from datapoints join datavariables on datapoints.variable = datavariables.id where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end])
+			return req.db.query("SELECT `time`, `value`, `variable` from datapoints where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end])
 			.then((data) => {
 				if (data.length < 1) {
 					res.status(404).send({ error: "No data found for run" })
 					return;
 				}
-				// combine data points with the same time
-				let dp = { time: 0 };
-				for (row of data) {
-					if (dp.time != 0 && row.time.getTime() !== dp.time.getTime()) {
-						// push old data to array first
-						meta.data.push(dp);
-						dp = { time: 0 };
-					}
-					dp.time = row.time;
-					dp[row.var] = row.value;
-				}
+				meta.data = combineDP(data, varmap);
 				res.status(200).send(meta)
 			})
 		})
@@ -94,6 +89,29 @@ router.get("/:runId", function (req, res) {
 		});
 
 });
+
+router.get("/range/:start/:end", (req, res) => {
+
+	let start = new Date(req.params.start);
+	let end = new Date(req.params.end);
+	let meta = {id: 0, runofday: 0, start: start, end: end, date: start, data: []};
+
+	let varmap;
+	return readVars(req.db)
+	.then((map) => { varmap = map; return varmap; })
+	.then(() => req.db.query("SELECT `time`, `value`, variable from datapoints where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end]))
+	.then((data) => {
+		if (data.length < 1) {
+			res.status(404).send({ error: "No data found for run" })
+			return;
+		}
+		meta.data = combineDP(data, varmap);
+		res.status(200).send(meta)
+	})
+	.catch((error) => {
+		res.status(500).send({ error })
+	});
+})
 
 router.patch("/:runId", (req, res) => {
 	/** @type {(key: string, value: string) => Promise<>} */

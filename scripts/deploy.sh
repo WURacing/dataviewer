@@ -15,6 +15,6 @@ set -xe
 tar -xavf ../$FNAME --strip-components=1 package
 npm install
 forever stopall
-forever start bin/www
+DATA_PASS=$DATA_PASS forever start bin/www
 AAA
 EOF
