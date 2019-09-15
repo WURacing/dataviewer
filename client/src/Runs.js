@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Card, CardColumns } from 'react-bootstrap';
+import { Alert, Button, Card, CardColumns } from 'react-bootstrap';
 import { handleClientAsyncError, handleServerError } from './util';
 
 export class Runs extends Component {
@@ -37,6 +37,11 @@ export class Runs extends Component {
 
 	render() {
 		return (
+			<>
+			<Alert key={1} variant="primary">
+				Update 9/15/19: filters are now any expressible function - not just linear combinations. i.e. you can use sin/cos/sqrt/etc
+				as part of the filters now. However, this does mean you need to re-create all your old filters.
+			</Alert>
 			<CardColumns>
 				{this.state.runs.map((run, index) =>
 					<Card key={`run${index}`} style={{ width: '18rem' }}>
@@ -55,6 +60,7 @@ export class Runs extends Component {
 					</Card>
 				)}
 			</CardColumns>
+			</>
 		);
 	}
 }
