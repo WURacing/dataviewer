@@ -4,6 +4,7 @@ import { Runs } from './Runs';
 import { Upload } from './UploadRun';
 import { Run } from './RunDetail';
 import { Filter } from './Filter';
+import { Telemetry } from './Telemetry';
 
 import './App.css';
 
@@ -16,6 +17,7 @@ class App extends Component {
 		this.openRuns = this.openRuns.bind(this);
 		this.openUpload = this.openUpload.bind(this);
 		this.openFilters = this.openFilters.bind(this);
+		this.openTelemetry = this.openTelemetry.bind(this);
 	}
 
 	render() {
@@ -29,6 +31,7 @@ class App extends Component {
 						<Nav.Link href="#home" onClick={this.openRuns}>Runs</Nav.Link>
 						<Nav.Link onClick={this.openUpload}>Upload</Nav.Link>
 						<Nav.Link onClick={this.openFilters}>Filters</Nav.Link>
+						<Nav.Link onClick={this.openTelemetry}>Telemetry</Nav.Link>
 					</Nav>
 					</Navbar.Collapse>
 				</Navbar>
@@ -43,6 +46,9 @@ class App extends Component {
 					{ this.state.mode === "filters" &&
 							<Breadcrumb.Item href="#" active>Filters</Breadcrumb.Item>
 					}
+					{ this.state.mode === "telemetry" &&
+							<Breadcrumb.Item href="#" active>Telemetry</Breadcrumb.Item>
+					}
 				</Breadcrumb>
 				<div className="content">
 				{ this.state.mode === "runs" &&
@@ -56,6 +62,9 @@ class App extends Component {
 				}
 				{ this.state.mode === "filters" &&
 					<Filter />
+				}
+				{ this.state.mode === "telemetry" &&
+					<Telemetry />
 				}
 				</div>
 			</div>
@@ -80,6 +89,11 @@ class App extends Component {
 	// switch to filters page
 	openFilters() {
 		this.setState({ mode: "filters" });
+	}
+
+	// switch to telemetry page
+	openTelemetry() {
+		this.setState({ mode: "telemetry" });
 	}
 	
 }

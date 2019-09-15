@@ -7,9 +7,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "pushd client; npm run build; popd; npm pack ./api",
-    "deploy": "rsync -r -a -v -e ssh --delete client/build/ root@server.connor.money:/var/www/apps/data"
+    "build": "pushd client; npm run build; popd",
+    "predeploy": "npm run build",
+    "deploy": "scripts/deploy.sh"
   },
   "repository": {
     "type": "git",
