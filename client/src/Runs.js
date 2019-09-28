@@ -41,6 +41,21 @@ export class Runs extends Component {
 		this.props.onOpenRun({ start, end });
 	}
 
+	formatTime(date) {
+		return new Intl.DateTimeFormat("en-US", {minute: "numeric", hour: "numeric", second: "numeric"}).format(new Date(date));
+	}
+
+	formatDuration(end, start) {
+		let sec = Math.floor((end.getTime() - start.getTime()) / 1000);
+		if (sec >= 3600) {
+			return `${Math.floor(sec / 3600)}h${Math.floor(sec / 60) % 60}m${sec % 60}s`;
+		} else if (sec >= 60) {
+			return `${Math.floor(sec / 60)}m${sec % 60}s`;
+		} else {
+			return `${sec}s`;
+		}
+	}
+
 	render() {
 		return (
 			<>
@@ -64,7 +79,7 @@ export class Runs extends Component {
 								{new Intl.DateTimeFormat("en-US").format(new Date(run.date))} Run {run.runofday}
 							</Card.Title>
 							<Card.Text>
-								<p>{new Intl.DateTimeFormat("en-US", {minute: "numeric", hour: "numeric", second: "numeric"}).format(new Date(run.date))} at {run.location}</p>
+								<p>{this.formatTime(run.date)} at {run.location}, {this.formatDuration(new Date(run.end), new Date(run.date))}</p>
 								{ run.type && <p>{run.type} Run</p>}
 								{ run.description && <p>Note: {run.description}</p>}
 							</Card.Text>

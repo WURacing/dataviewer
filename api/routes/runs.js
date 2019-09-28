@@ -7,7 +7,7 @@ const { promisify } = require('util');
 // Get listing of all runs
 router.get('/', function (req, res) {
 	/** @type {(key: string) => Promise<string[]>} */
-	req.db.query("SELECT id, location, description, type, runofday, start AS date FROM datarunmeta ORDER BY start ASC")
+	req.db.query("SELECT id, location, description, type, runofday, start AS date, end FROM datarunmeta ORDER BY start ASC")
 		.then((rows) => {
 			res.status(200).send(rows)
 		})

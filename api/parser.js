@@ -16,9 +16,8 @@ class MariaVariableLookup extends Transform {
 
 		this.cache.getId(chunk.sig_name)
 		.then(varid => {
-			callback(null, [new Date(chunk.timestamp), varid, chunk.sig_val])
+			callback(null, [new Date(chunk.timestamp), varid, chunk.sig_val, chunk.sig_val])
 		}).catch(error => {
-			callback(error)
 			callback(error, null)
 		})
 	}
@@ -35,7 +34,7 @@ class MariaDatabaseWriter extends Writable {
 	_write(chunk, encoding, callback) {
 		this.block.push(chunk);
 		if (this.block.length >= 1000) {
-			this.insertBlock().then(_ => callback(), err => callback(err));
+			this.insertBlock().then(_ => callback()).catch(err => {callback(err)});
 		} else {
 			callback();
 		}
@@ -53,15 +52,17 @@ class MariaDatabaseWriter extends Writable {
 			this.endTS = bmaxtime;
 		
 		console.log(`Inserting block of length ${block.length}`)
-		return this.db.batch("INSERT INTO datapoints (time,variable,value) VALUES (?,?,?)", block)
+		return this.db.batch("INSERT INTO datapoints (time,variable,value) VALUES (?,?,?) ON DUPLICATE KEY UPDATE value=?", block)
 		.then(_ => {
 			this.block = [];
 			return true;
 		})
 		.catch(error => {
 			console.error(error);
+			console.log(this.block);
 			this.db.rollback();
-			return error;
+			this.block = [];
+			throw error;
 		})
 	}
 
@@ -139,16 +140,16 @@ function importFile(path, client) {
 		let writer = new MariaDatabaseWriter(client);
 		file.on('error', e => {
 			console.warn(e);
-			reject("File reading failed");
+			reject(`File reading failed\nError: ${e}`);
 		}).pipe(parser).on('error', e => {
 			console.warn(e);
-			reject("Parsing CSV data failed");
+			reject(`Parsing CSV data failed\nError: ${e}`);
 		}).pipe(lookup).on('error', e => {
 			console.warn(e);
-			reject("Searching for variables failed");
+			reject(`Searching for variables failed\nError: ${e}`);
 		}).pipe(writer).on('error', e => {
 			console.warn(e);
-			reject("Database writing failed");
+			reject(`Database writing failed\nError: ${e}`);
 		}).on("finish", () => {
 			resolve(writer.rowid);
 		})
