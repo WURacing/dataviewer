@@ -28,8 +28,11 @@ app.use(logger('dev'));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors());
-app.use(compression());
+app.use(compression({ filter: (req, res) => !req.url.includes("telemetry")}));
 app.use(function addDatabase(req, res, next) {
+	if (req.url.includes("telemetry")) {
+		return next();
+	}
 	pool.getConnection().then(conn => {
 		req.db = conn;
 		res.on('finish', function removeDatabase() {

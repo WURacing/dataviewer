@@ -49,6 +49,8 @@ class TelemetryServer {
         // Convert raw CAN data into a key/value dictionary str->number
         let parsed = this.dbc.decode_message(frame_id, data);
 
+        console.log(`Received message at ${timestamp}`)
+
         // Forward each signal separately
         for (let key of Object.keys(parsed)) {
             this.app.postTelemetryMessage(key, parsed[key]);

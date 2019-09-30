@@ -10,6 +10,7 @@ export class Telemetry extends Component {
         this.es = new EventSource(process.env.REACT_APP_API_SERVER + '/api/telemetry');
         this.es.onopen = this.opened.bind(this);
         this.es.onerror = this.error.bind(this);
+        this.es.onmessage =  this.listener.bind(this);
         this.es.addEventListener("message", this.listener.bind(this));
     }
 
@@ -32,6 +33,7 @@ export class Telemetry extends Component {
     // Called for each individual signal update
     listener(msg) {
         let data = JSON.parse(msg.data);
+        console.log(data);
         this.setState(state => {
             state.data[data.key] = data.value;
             return state;
