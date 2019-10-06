@@ -16,8 +16,8 @@
 		"dev": "nodemon ./bin/www"
 	},
 	"dependencies": {
-		"@cmonahan/cantools": "0.0.1",
-		"@wuracing/dbc": "https://github.com/WURacing/DBC/archive/2019.1.0.tar.gz",
+		"@cmonahan/cantools": "0.0.2",
+		"@wuracing/dbc": "https://github.com/WURacing/DBC/archive/2019.2.1.tar.gz",
 		"compression": "^1.7.4",
 		"cookie-parser": "~1.4.3",
 		"cors": "^2.8.5",

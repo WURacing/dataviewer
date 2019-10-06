@@ -55,6 +55,9 @@ class TelemetryServer {
         for (let key of Object.keys(parsed)) {
             this.app.postTelemetryMessage(key, parsed[key]);
         }
+        if (Object.keys(parsed).length == 0) {
+            this.app.postTelemetryMessage("UnknownMessageIdReceived", frame_id);
+        }
     }
 }
 
