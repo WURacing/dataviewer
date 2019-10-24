@@ -60,8 +60,7 @@ export class Runs extends Component {
 		return (
 			<>
 			<Alert key={1} variant="primary">
-				Update 9/15/19: filters are now any expressible function - not just linear combinations. i.e. you can use sin/cos/sqrt/etc
-				as part of the filters now. However, this does mean you need to re-create all your old filters.
+				Update 10/23/19: Please send your criticism to @Connor Monahan and @ethanshry!
 			</Alert>
 			<Form>
 				<Form.Group as={Row} controlId="formDate">

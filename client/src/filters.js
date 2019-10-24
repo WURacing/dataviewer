@@ -28,7 +28,7 @@ export function calculateFilterValue(filter, data) {
 }
 
 export function createFilterForVariable(variable) {
-	return {name: variable, expression: variable};
+	return {name: variable.name, expression: variable.name, required: [variable.id]};
 }
 
 /**
