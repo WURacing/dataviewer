@@ -11,14 +11,11 @@ var runsRouter = require('./routes/runs');
 var filtersRouter = require('./routes/filters');
 
 const mariadb = require('mariadb');
-const pool = mariadb.createPool({
-     host: '127.0.0.1', 
-     user: 'connor', 
-	 password: process.env.DATA_PASS,
-	 database: 'apps',
-	 connectionLimit: 5,
-	 timezone: 'UTC'
-});
+var fs = require("fs");
+
+let config = JSON.parse(fs.readFileSync("./config.json", {"encoding": "utf-8"}));
+
+const pool = mariadb.createPool(config.database);
 
 var app = express();
 var sse = new SSE();

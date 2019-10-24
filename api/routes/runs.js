@@ -1,7 +1,9 @@
+const { Writable, Transform } = require("stream");
 var express = require('express');
 const importFile = require('../parser');
 var router = express.Router();
 const { promisify } = require('util');
+const crypto = require('crypto')
 
 
 // Get listing of all runs
@@ -56,6 +58,28 @@ function readVars(db) {
 	})
 }
 
+
+class VariableExpander extends Transform {
+	constructor(varmap) {
+		super({objectMode: true});
+		this.varmap = varmap;
+		this.first = true;
+	}
+	_transform(chunk, encoding, callback) {
+		if (this.first) {
+			this.first = false;
+		} else {
+			this.push(",");
+		}
+		let dp = {time: chunk.time};
+		dp[this.varmap[chunk.variable]] = chunk.value;
+		callback(null, JSON.stringify(dp));
+	}
+	_flush(callback) {
+		callback(null, "]}");
+	}
+}
+
 // Get details on a particular run
 router.get("/:runId", function (req, res) {
 	let id = parseInt(req.params.runId)
@@ -70,19 +94,29 @@ router.get("/:runId", function (req, res) {
 				return;
 			}
 			let meta = rows[0]
+			// avoid hitting the DB if we don't have to
+			let etag = crypto.createHash('md5').update(JSON.stringify(meta)).digest("hex")
+			if (req.headers["if-none-match"] == etag) {
+				return res.sendStatus(304);
+			}
 			meta.id = id;
 			meta.date = meta.start;
-			return req.db.query("SELECT `time`, `value`, `variable` from datapoints where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end])
-			.then((data) => {
-				if (data.length < 1) {
-					res.status(404).send({ error: "No data found for run" })
-					return;
-				}
-				meta.data = combineDP(data, varmap);
-				res.status(200).send(meta)
-			})
+			let placeholder = "XXXXXXXXXX";
+			meta.data = placeholder;
+			// start the stream
+			res.setHeader('Content-Type', 'application/json');
+			res.setHeader('Transfer-Encoding', 'chunked');
+			res.setHeader('ETag', etag);
+			res.setHeader('Cache-Control', 'public, max-age=7000000'); // remember it for 3 months
+			// send the metadata and opening array marker
+			res.write(JSON.stringify(meta).split(`"${placeholder}"`)[0] + "[");
+			// stream the rest of the data
+			return req.db.queryStream("SELECT `time`, `value`, `variable` from datapoints where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end])
+			.pipe(new VariableExpander(varmap))
+			.pipe(res)
 		})
 		.catch((error) => {
+			console.error(error)
 			res.status(500).send({ error })
 		});
 
@@ -94,19 +128,29 @@ router.get("/range/:start/:end", (req, res) => {
 	let end = new Date(req.params.end);
 	let meta = {id: 0, runofday: 0, start: start, end: end, date: start, data: []};
 
-	let varmap;
 	return readVars(req.db)
-	.then((map) => { varmap = map; return varmap; })
-	.then(() => req.db.query("SELECT `time`, `value`, variable from datapoints where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end]))
-	.then((data) => {
-		if (data.length < 1) {
-			res.status(404).send({ error: "No data found for run" })
-			return;
+	.then((varmap) => {
+		// avoid hitting the DB if we don't have to
+		let etag = start.toUTCString(); // in the future, compute the last data point in the day or something
+		if (new Date(req.headers["if-modified-since"]) >= start) {
+			return res.sendStatus(304);
 		}
-		meta.data = combineDP(data, varmap);
-		res.status(200).send(meta)
+		let placeholder = "XXXXXXXXXX";
+		meta.data = placeholder;
+		// start the stream
+		res.setHeader('Content-Type', 'application/json');
+		res.setHeader('Transfer-Encoding', 'chunked');
+		res.setHeader('Last-Modified', etag);
+		res.setHeader('Cache-Control', 'public, max-age=7000000'); // remember it for 3 months
+		// send the metadata and opening array marker
+		res.write(JSON.stringify(meta).split(`"${placeholder}"`)[0] + "[");
+		// stream the rest of the data
+		return req.db.queryStream("SELECT `time`, `value`, `variable` from datapoints where `time` > ? and `time` < ? order by `time` ASC", [meta.start, meta.end])
+		.pipe(new VariableExpander(varmap))
+		.pipe(res)
 	})
 	.catch((error) => {
+		console.error(error)
 		res.status(500).send({ error })
 	});
 })

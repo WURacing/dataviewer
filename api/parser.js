@@ -2,6 +2,47 @@ const csv = require("csv-parse");
 const fs = require("fs");
 const { RedisClient } = require("redis");
 const { Writable, Transform } = require("stream");
+const can = require("@cmonahan/cantools");
+const dbc = require("@wuracing/dbc");
+
+class FileFormatDecoder extends Transform {
+	constructor(db) {
+		super({objectMode: true});
+		this.dbc = can.database.load_file(require.resolve("@wuracing/dbc/" + dbc.dbcfile));
+	}
+	_transform(chunk, encoding, callback) {
+		if (chunk.hasOwnProperty("timestamp") && chunk.hasOwnProperty("sig_name") && chunk.hasOwnProperty("sig_val"))
+		{
+			return callback(null, {date: new Date(chunk.timestamp), name: chunk.sig_name, value: chunk.sig_val})
+		}
+		if (chunk.hasOwnProperty("year") && chunk.hasOwnProperty("month") && chunk.hasOwnProperty("day")
+		&& chunk.hasOwnProperty("hour") && chunk.hasOwnProperty("min") && chunk.hasOwnProperty("sec")
+		&& chunk.hasOwnProperty("ms") && chunk.hasOwnProperty("id") && chunk.hasOwnProperty("data"))
+		{
+			if (chunk.data.length != 16) {
+				// incomplete row, skip!
+				return callback();
+			}
+			let year = parseInt(chunk.year);
+			let month = parseInt(chunk.month);
+			let day = parseInt(chunk.day);
+			let hour = parseInt(chunk.hour);
+			let minute = parseInt(chunk.min);
+			let second = parseInt(chunk.sec);
+			let ms = parseInt(chunk.ms);
+			let d = new Date(Date.UTC(year, month - 1, day, hour, minute, second, ms));
+			d.setHours(d.getHours() + 5); // log files after April 2019 are all CDT (UTC-5)
+			let id = parseInt(chunk.id, 16);
+			let data = Buffer.from(chunk.data, "hex");
+			let parsed = this.dbc.decode_message(id, data);
+			for (let key of Object.keys(parsed)) {
+				this.push({date: d, name: key, value: parsed[key]});
+			}
+			return callback();
+		}
+		return callback("Invalid file format", null)
+	}
+}
 
 
 class MariaVariableLookup extends Transform {
@@ -11,12 +52,9 @@ class MariaVariableLookup extends Transform {
 		this.cache = new VarCache(this.db);
 	}
 	_transform(chunk, encoding, callback) {
-		if (!(chunk.hasOwnProperty("timestamp") && chunk.hasOwnProperty("sig_name") && chunk.hasOwnProperty("sig_val")))
-			return callback("Invalid file format", null)
-
-		this.cache.getId(chunk.sig_name)
+		this.cache.getId(chunk.name)
 		.then(varid => {
-			callback(null, [new Date(chunk.timestamp), varid, chunk.sig_val, chunk.sig_val])
+			callback(null, [chunk.date, varid, chunk.value, chunk.value])
 		}).catch(error => {
 			callback(error, null)
 		})
@@ -24,9 +62,10 @@ class MariaVariableLookup extends Transform {
 }
 
 class MariaDatabaseWriter extends Writable {
-	constructor(client) {
+	constructor(client, status) {
 		super({objectMode: true, highWaterMark: 1000});
 		this.db = client;
+		this.status = status;
 		this.db.beginTransaction();
 		this.block = [];
 	}
@@ -54,6 +93,7 @@ class MariaDatabaseWriter extends Writable {
 		console.log(`Inserting block of length ${block.length}`)
 		return this.db.batch("INSERT INTO datapoints (time,variable,value) VALUES (?,?,?) ON DUPLICATE KEY UPDATE value=?", block)
 		.then(_ => {
+			this.status(block.length);
 			this.block = [];
 			return true;
 		})
@@ -126,24 +166,42 @@ class VarCache {
 	}
 }
 
+class DebugWriter extends Writable {
+	constructor() {
+		super({objectMode: true, highWaterMark: 1000});
+	}
+
+	_write(chunk, encoding, callback) {
+		console.log(chunk);
+		callback();
+	}
+}
+
+
 /**
  * Import a CSV file into the database
  * @param {string} path Path to uploaded file (probably in /tmp)
  * @param {RedisClient} client Database client
  * @returns {Promise<number>} ID of newly added file
  */
-function importFile(path, client) {
+function importFile(file, client, res) {
 	return new Promise((resolve, reject) => {
-		const file = fs.createReadStream(path, {flags: 'r'});
-		const parser = csv({ delimeter: ',', cast: true, columns: true });
+		const file = fs.createReadStream(file.path, {flags: 'r'});
+		const parser = csv({ delimeter: ',', cast: true, columns: true, skip_lines_with_error: true });
+		let decoder = new FileFormatDecoder();
 		let lookup = new MariaVariableLookup(client);
-		let writer = new MariaDatabaseWriter(client);
+		let writer = new MariaDatabaseWriter(client, (length) => {
+			
+		});
 		file.on('error', e => {
 			console.warn(e);
 			reject(`File reading failed\nError: ${e}`);
 		}).pipe(parser).on('error', e => {
 			console.warn(e);
 			reject(`Parsing CSV data failed\nError: ${e}`);
+		}).pipe(decoder).on('error', e => {
+			console.warn(e);
+			reject(`Decoding file format failed\nError: ${e}`);
 		}).pipe(lookup).on('error', e => {
 			console.warn(e);
 			reject(`Searching for variables failed\nError: ${e}`);

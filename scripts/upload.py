@@ -4,24 +4,24 @@ import csv
 import re
 import requests
 
-location = "UNKNOWN"
-runpattern = re.compile(r"RUN(\d+).+")
+location = "MOHELA"
+runpattern = re.compile(r"...(\d+).+")
 
-for file in glob.glob("RUN*.csv"):
+
+def process(file):
     good = False
     no = int(runpattern.match(file).group(1))
-    with open(file, newline='') as fd:
-        reader = csv.DictReader(fd)
-        for row in reader:
-            val = float(row['sig_val'])
-            if row['sig_name'] == "EngineSpeed" and val > 1000:
-                good = True
-                break
-    if good:
-        with open(file, "rb") as fd:
-            print(file)
-            print(no)
-            r = requests.post("http://apps.connor.money/data/api/runs",
-                files={"file": fd}, data={"location": location, "runofday": no})
-            if r.status_code != 201:
-                print(r.text)
+    with open(file, "rb") as fd:
+        print(file)
+        print(no)
+        r = requests.post("http://apps.connor.money/data/api/runs",
+            files={"file": fd}, data={"location": location, "runofday": no})
+        if r.status_code != 201:
+            print(r.text)
+
+for file in glob.glob("RUN*.csv"):
+    process(file)
+
+for file in glob.glob("LOG*.CSV"):
+    process(file)
+
