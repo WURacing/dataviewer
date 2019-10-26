@@ -154,7 +154,7 @@ export class Run extends Component {
 				<div className="run">
 					{this.state.showWait &&
 						<div>
-							<DialogModal title={"Shut up"} message={this.state.waitMessage} onClose={null} />
+							<DialogModal title={"Data Download"} message={this.state.waitMessage} onClose={null} />
 						</div>
 					}
 					{this.state.showPlot &&

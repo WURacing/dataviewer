@@ -86,3 +86,5 @@ yarn-error.log*
 
 dump.rdb
 config.json
+
+/data

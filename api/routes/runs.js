@@ -1,6 +1,6 @@
 const { Writable, Transform } = require("stream");
 var express = require('express');
-const importFile = require('../parser');
+const parser = require('../parser');
 var router = express.Router();
 const { promisify } = require('util');
 const crypto = require('crypto')
@@ -20,17 +20,33 @@ router.get('/', function (req, res) {
 
 // Upload a new run log file
 router.post('/', function (req, res) {
-	importFile(req.files.file.path, req.db)
-		.then((id) => req.db.query("UPDATE datarunmeta SET location = ?, runofday = ? WHERE id = ?",
-			[req.fields.location, req.fields.runofday, id])
-		.then(() => {
-			res.status(201).location(`/api/runs/${id}`).send({ id });
-		}))
+	// create the new run ID
+	req.db.query(
+		"INSERT INTO datarunmeta (location, runofday) VALUES (?, ?)",
+		[req.fields.location, req.fields.runofday])
+		.then((result) => {
+			let id = result.insertId;
+			// queue up processing
+			parser.importFile(req.files.file.path, id, req.db);
+			// let the client know we're processing now
+			res.status(202).location(`/api/runs/${id}`).send({ id });
+		})
 		.catch((error) => {
 			console.log(error)
 			res.status(500).send({ error });
 		});
 });
+
+router.get("/processing/:runId", (req, res) => {
+	let id = parseInt(req.params.runId);
+	// check if its still processing.
+	let job = parser.queue.checkStatus(id);
+	if (job) {
+		res.status(200).send({ id: id, status: job.status, progress: job.count / job.total});
+	} else {
+		res.status(404).send({ id });
+	}
+})
 
 function combineDP(data, varmap) {
 	// combine data points with the same time

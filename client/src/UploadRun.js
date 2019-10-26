@@ -1,15 +1,82 @@
 import React, { Component } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, ProgressBar } from 'react-bootstrap';
 import { handleClientAsyncError } from './util';
+
+/**
+ * 
+ * @param {{upload: {name: string, state: number, uploadProgress: number, processProgress: number}}} props 
+ */
+function UploadProgressBar(props) {
+	let upload = props.upload;
+	let condition = "Unknown";
+	let uploadVariant = "info";
+	let uploadAnimate = false;
+	let processVariant = "info";
+	let processAnimate = false;
+	switch (upload.state) {
+		case 0:
+			condition = "Waiting to upload";
+			break;
+		case 1:
+			condition = "Uploading...";
+			uploadAnimate = true;
+			break;
+		case 2:
+			condition = "Uploaded!";
+			uploadVariant = "success";
+			break;
+		case 7:
+			condition = "Upload error from server";
+			uploadVariant = "danger";
+			break;
+		case 8:
+			condition = "Upload error on client";
+			uploadVariant = "danger";
+			break;
+		case 9:
+			condition = "Upload cancelled";
+			uploadVariant = "warning";
+			break;
+		case 10:
+			condition = "Queued processing";
+			uploadVariant = "success";
+			break;
+		case 11:
+			condition = "Processing...";
+			uploadVariant = "success";
+			processAnimate = true;
+			break;
+		case 19:
+			condition = "Processing failed";
+			uploadVariant = "success";
+			processVariant = "danger";
+			break;
+		case 20:
+			condition = "Processed!";
+			uploadVariant = "success";
+			processVariant = "success";
+			break;
+	}
+	return <>
+		<p>{upload.name}: {condition}</p>
+		<ProgressBar>
+			<ProgressBar animated={uploadAnimate} striped variant={uploadVariant} now={upload.uploadProgress * 50} key={1} />
+			<ProgressBar animated={processAnimate} striped variant={processVariant} now={upload.processProgress * 50} key={2} />
+		</ProgressBar>
+	</>;
+}
 
 export class Upload extends Component {
 	constructor(props) {
 		super(props);
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.fileRef = React.createRef();
-		this.noRef = React.createRef();
 		this.locationRef = React.createRef();
-		this.state = { loading: false };
+		this.state = { loading: false, uploadHistory: [], currentUpload: null };
+	}
+
+	componentDidMount() {
+		this.fileRef.current.multiple = true;
 	}
 
 	render() {
@@ -24,10 +91,6 @@ export class Upload extends Component {
 						</Form.Text>
 						<Form.Control.Feedback type="invalid">{this.state.fileError}</Form.Control.Feedback>
 					</Form.Group>
-					<Form.Group controlId="runno">
-						<Form.Label>Run Number Of Day</Form.Label>
-						<Form.Control type="number" placeholder="1" required ref={this.noRef} />
-					</Form.Group>
 					<Form.Group controlId="location">
 						<Form.Label>Location</Form.Label>
 						<Form.Control type="text" placeholder="Race Track" required ref={this.locationRef} />
@@ -36,43 +99,137 @@ export class Upload extends Component {
 						Submit
 					</Button>
 				</Form>
+				<h1>Upload Progress</h1>
+				{this.state.currentUpload && <UploadProgressBar upload={this.state.currentUpload} />}
+				{this.state.uploadHistory.slice(0).reverse().map(upload => <UploadProgressBar upload={upload} />)}
 			</div>
 		);
 	}
 
-	handleSubmit(event) {
+	async handleSubmit(event) {
 		event.preventDefault();
-		if (this.state.loading) return;
-		let file = this.fileRef.current.files[0];
-		let formData = new FormData();
-		// upload file and other metadata
-		formData.append('file', file);
-		formData.append('runofday', this.noRef.current.value);
-		formData.append('location', this.locationRef.current.value);
-		this.setState({ loading: true });
 		event.persist();
-		fetch(process.env.REACT_APP_API_SERVER + "/api/runs", {
-			method: "POST",
-			body: formData
-		})
-			.then(response => response.json())
-			// jump to run page if successful
-			.then(result => {
-				if (result.error) {
-					// set an error message on the page if failed
-					// this.fileRef.current.setCustomValidity(result.error);
-					// event.target.reportValidity();	
-					alert(result.error);
-				} else {
-					this.props.onOpenRun(result.id)
+		if (this.state.loading) return;
+
+
+		console.log(this.fileRef.current.files);
+
+		// upload each file in turn
+		for (const file of this.fileRef.current.files) {
+			this.setState(state => {
+				if (state.currentUpload) {
+					state.uploadHistory.push(state.currentUpload);
+					state.currentUpload = null;
 				}
+				return state;
 			})
-			.catch(handleClientAsyncError)
-			.finally(() => {
-				this.setState({ loading: false });
-			});
+			let id = await this.uploadFile(file);
+			await this.processFile(id);
+		}
 
 	}
+
+	/**
+	 * 
+	 * @param {File} file 
+	 */
+	uploadFile(file) {
+		return new Promise((resolve, reject) => {
+
+			let rodIdRe = /(?:LOG|RUN)(\d+).\w+/i;
+			let rodIdStr = rodIdRe.exec(file.name);
+			let rodIdNum = 0;
+			if (rodIdStr) {
+				rodIdNum = parseInt(rodIdStr[1]);
+			}
+
+			let currentUpload = { name: file.name, state: 0, uploadProgress: 0, processProgress: 0 };
+			this.setState({ currentUpload });
+
+			let formData = new FormData();
+			// upload file and other metadata
+			formData.append('file', file);
+			formData.append('runofday', rodIdNum);
+			formData.append('location', this.locationRef.current.value);
+
+			var request = new XMLHttpRequest();
+			request.responseType = "json";
+			request.open("POST", process.env.REACT_APP_API_SERVER + "/api/runs");
+
+			request.upload.addEventListener("progress", e => {
+				if (e.lengthComputable) {
+					console.log(`Uploaded ${e.loaded / e.total * 100} pct`)
+					currentUpload.state = 1;
+					currentUpload.uploadProgress = e.loaded / e.total;
+					this.setState({ currentUpload });
+				} else {
+					console.log(`Uploaded ${e.loaded}`)
+				}
+			})
+			request.upload.addEventListener("load", e => {
+				currentUpload.state = 2;
+				this.setState({ currentUpload });
+			})
+			request.addEventListener("load", ev => {
+				if (request.status >= 200 && request.status < 300) {
+					currentUpload.state = 10;
+					this.setState({ currentUpload });
+					resolve(request.response.id);
+				} else {
+					currentUpload.state = 7;
+					this.setState({ currentUpload });
+					reject();
+				}
+			});
+			request.addEventListener("error", e => {
+				currentUpload.state = 8;
+				this.setState({ currentUpload });
+				reject();
+			})
+			request.addEventListener("abort", e => {
+				currentUpload.state = 9;
+				this.setState({ currentUpload });
+				reject();
+			})
+			request.send(formData);
+		});
+
+	}
+
+	// holy crap 8 levels of indention, if someone can fix this please help
+	processFile(id) {
+		return new Promise((resolve, reject) => {
+			let timer = setInterval(() => {
+				fetch(process.env.REACT_APP_API_SERVER + `/api/runs/processing/${id}`)
+					.then(response => response.json())
+					.then(result => {
+						if (result.hasOwnProperty("status")) {
+							this.setState((state) => {
+								state.currentUpload.state = result.status + 10;
+								state.currentUpload.processProgress = result.progress;
+								if (result.status === 10) {
+									// *new jersey accent* don't worry about it
+									state.currentUpload.processProgress = 1; 
+								}
+								return state;
+							})
+							if (result.status === 9) {
+								clearInterval(timer);
+								reject();
+							} else if (result.status === 10) {
+								clearInterval(timer);
+								resolve();
+							}
+						}
+					})
+					.catch((e) => {
+						clearInterval(timer);
+						reject(e);
+					});
+			}, 3000);
+		});
+	}
+
 }
 
 export default Upload;

@@ -68,7 +68,7 @@ def parse_packets(file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Send CAN packets to endpoint")
     parser.add_argument("input", type=str, help="Input raw CSV from datalogger")
-    parser.add_argument("--endpoint_host", type=str, default="apps.connor.money", help="Telemetry server hostname")
+    parser.add_argument("--endpoint_host", type=str, default="api.data.wuracing.com", help="Telemetry server hostname")
     parser.add_argument("--endpoint_port", type=int, default=9999, help="Telemetry server port")
     parser.add_argument("--frequency", type=int, default=4, help="Frequency of sent packets, Hz")
 

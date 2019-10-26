@@ -1,9 +1,37 @@
 const csv = require("csv-parse");
 const fs = require("fs");
-const { RedisClient } = require("redis");
 const { Writable, Transform } = require("stream");
 const can = require("@cmonahan/cantools");
 const dbc = require("@wuracing/dbc");
+
+class ImportQueue {
+	constructor() {
+		this.queue = {};
+	}
+
+	addTracker(id, filePath) {
+		let fileStat = fs.statSync(filePath);
+		let item = {id: id, file: filePath, status: 0, count: 0, total: fileStat.size / 47 * 4};
+		this.queue[id] = item;
+		return item;
+	}
+
+	updateItem(id, changes) {
+		let item = this.queue[id];
+		for (let key of Object.keys(changes)) {
+			item[key] = changes[key];
+		}
+		this.queue[id] = item;
+		return item;
+	}
+
+	checkStatus(id) {
+		let item = this.queue[id];
+		return item;
+	}
+}
+
+let importQueue = new ImportQueue();
 
 class FileFormatDecoder extends Transform {
 	constructor(db) {
@@ -62,9 +90,10 @@ class MariaVariableLookup extends Transform {
 }
 
 class MariaDatabaseWriter extends Writable {
-	constructor(client, status) {
+	constructor(client, id, status) {
 		super({objectMode: true, highWaterMark: 1000});
 		this.db = client;
+		this.id = id;
 		this.status = status;
 		this.db.beginTransaction();
 		this.block = [];
@@ -81,7 +110,7 @@ class MariaDatabaseWriter extends Writable {
 
 	insertBlock() {
 		let block = this.block;
-		if (block.length === 0) return;
+		if (block.length === 0) return Promise.resolve();
 
 		let bmintime = block.reduce((prev, cur) => cur[0] < prev[0] ? cur : prev, block[0])[0];
 		let bmaxtime = block.reduce((prev, cur) => cur[0] > prev[0] ? cur : prev, block[0])[0];
@@ -109,10 +138,9 @@ class MariaDatabaseWriter extends Writable {
 	_final(callback) {
 		console.log(`Saving run from ${this.startTS} to ${this.endTS}`)
 		this.insertBlock()
-		.then(_ => this.db.query("INSERT INTO datarunmeta (start,end) VALUES (?,?)", [this.startTS, this.endTS]))
+		.then(_ => this.db.query("UPDATE datarunmeta SET start = ?, end = ? WHERE id = ?", [this.startTS, this.endTS, this.id]))
 		.then(result => {
 			this.db.commit();
-			this.rowid = result.insertId;
 			callback()
 		})
 		.catch(error => {
@@ -181,38 +209,55 @@ class DebugWriter extends Writable {
 /**
  * Import a CSV file into the database
  * @param {string} path Path to uploaded file (probably in /tmp)
- * @param {RedisClient} client Database client
- * @returns {Promise<number>} ID of newly added file
+ * @param {number} id Run ID
+ * @param {PoolConnection} client Database client
+ * @returns {Promise<any>} completion
  */
-function importFile(file, client, res) {
+function importFile(path, id, client) {
 	return new Promise((resolve, reject) => {
-		const file = fs.createReadStream(file.path, {flags: 'r'});
+		importQueue.addTracker(id, path);
+
+		console.log(importQueue.queue);
+
+		const file = fs.createReadStream(path, {flags: 'r'});
 		const parser = csv({ delimeter: ',', cast: true, columns: true, skip_lines_with_error: true });
 		let decoder = new FileFormatDecoder();
 		let lookup = new MariaVariableLookup(client);
-		let writer = new MariaDatabaseWriter(client, (length) => {
-			
+		let writer = new MariaDatabaseWriter(client, id, (length) => {
+			let item = importQueue.checkStatus(id);
+			importQueue.updateItem(id, { count: item.count + length });
 		});
 		file.on('error', e => {
 			console.warn(e);
+			importQueue.updateItem(id, {status: 9, error: e});
 			reject(`File reading failed\nError: ${e}`);
 		}).pipe(parser).on('error', e => {
 			console.warn(e);
+			importQueue.updateItem(id, {status: 9, error: e});
 			reject(`Parsing CSV data failed\nError: ${e}`);
 		}).pipe(decoder).on('error', e => {
 			console.warn(e);
+			importQueue.updateItem(id, {status: 9, error: e});
 			reject(`Decoding file format failed\nError: ${e}`);
 		}).pipe(lookup).on('error', e => {
 			console.warn(e);
+			importQueue.updateItem(id, {status: 9, error: e});
 			reject(`Searching for variables failed\nError: ${e}`);
 		}).pipe(writer).on('error', e => {
 			console.warn(e);
+			importQueue.updateItem(id, {status: 9, error: e});
 			reject(`Database writing failed\nError: ${e}`);
 		}).on("finish", () => {
-			resolve(writer.rowid);
-		})
+			importQueue.updateItem(id, {status: 10});
+			resolve();
+		});
+
+		importQueue.updateItem(id, {status: 1});
 	});
 }
 
-module.exports = importFile;
+module.exports = {
+	importFile: importFile,
+	queue: importQueue
+};
 
