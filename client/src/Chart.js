@@ -32,8 +32,17 @@ export class ChartModal extends Component {
 
 	update(state, props) {
 		state.filters = props.filters.slice();
+		// Fake continuity (probably needs a better solution like averaging, but this is O(n))
+		let prev = {};
+		state.data = [];
+		for (let dp of props.data) {
+			let n = {};
+			Object.assign(prev, dp);
+			Object.assign(n, prev);
+			state.data.push(n);
+		}		
 		// Load filters and calculate the LCs
-		state.data = filterData(props.data, props.filters);
+		state.data = filterData(state.data, props.filters);
 		state.title = props.filters.reduce((accum, filter, index) => {
 			if (index < props.filters.length - 1) {
 				return accum + filter.name + " and ";
@@ -55,12 +64,6 @@ export class ChartModal extends Component {
 		state.filename = "DATA_" + time + "_" + props.filters.map(filter => filter.name).join("-") + ".csv";
 
 
-		// Fake continuity (probably needs a better solution like averaging, but this is O(n))
-		let prev = {};
-		for (let dp of state.data) {
-			Object.assign(prev, dp);
-			Object.assign(dp, prev);
-		}
 
 		const shouldZoom = Number.isInteger(state.zoom.left) && Number.isInteger(state.zoom.right);
 
