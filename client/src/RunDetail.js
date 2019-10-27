@@ -163,8 +163,8 @@ export class Run extends Component {
 						</div>
 					}
 					<Jumbotron>
-						<h1>Run {this.state.run.meta.runofday} on {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.meta.start))}</h1>
 						{this.getRunTechnicalType() == "single" && <>
+							<h1>Run {this.state.run.meta.runofday} on {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.meta.start))}</h1>
 							<p>Location: {this.state.run.meta.location}</p>
 							<Form onSubmit={this.handleSubmit.bind(this)}>
 								<Form.Group controlId="editRun.type">
@@ -192,6 +192,10 @@ export class Run extends Component {
 								{this.state.loading && <Spinner animation="border" role="status" />}
 								{this.state.saved && <p>Saved.</p>}
 							</Form>
+						</>}
+						{this.getRunTechnicalType() == "range" && <>
+							<h1>Data from {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.meta.start))} to {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.meta.end))}</h1>
+							<p>Location: {this.state.run.meta.location}</p>
 						</>}
 					</Jumbotron>
 					<h1>Filters applicable to this run</h1>

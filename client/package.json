@@ -13,12 +13,12 @@
 	"private": true,
 	"dependencies": {
 		"bootstrap": "^4.3.1",
-		"mathjs": "^6.2.1",
-		"react": "^16.8.6",
-		"react-bootstrap": "^1.0.0-beta.6",
-		"react-dom": "^16.8.6",
+		"mathjs": "^6.2.3",
+		"react": "^16.11.0",
+		"react-bootstrap": "^1.0.0-beta.14",
+		"react-dom": "^16.11.0",
 		"react-scripts": "2.1.8",
-		"recharts": "^1.5.0"
+		"recharts": "^1.8.5"
 	},
 	"scripts": {
 		"start": "react-scripts start",
@@ -30,9 +30,6 @@
 		"extends": "react-app"
 	},
 	"browserslist": [
-		">0.2%",
-		"not dead",
-		"not ie <= 11",
-		"not op_mini all"
+		"> 1% in US"
 	]
 }
