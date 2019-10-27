@@ -4,6 +4,7 @@ const parser = require('../parser');
 const stringify = require('csv-stringify')
 var router = express.Router();
 
+//#region Utils
 
 // Utility function to read all variables and build a map
 function readVars(db) {
@@ -107,10 +108,9 @@ function getApplicableFilters(globalFilters, globalVariables, localVariables) {
 	return applicableFilters;
 }
 
+//#endregion
 
-/**
- * Create
- */
+//#region Create
 
 // Upload a new run log file
 router.post('/', async (req, res) => {
@@ -143,10 +143,9 @@ router.get("/processing/:runId", (req, res) => {
 	}
 })
 
-/**
- * Read
- */
+//#endregion
 
+//#region Read
 
 // Get listing of all runs
 router.get('/', async (req, res) => {
@@ -250,9 +249,9 @@ router.get("/points/:start/:end/:sampleSize/:variables\.:ext?", async (req, res)
 	}
 })
 
-/**
- * Update
- */
+//#endregion Read
+
+//#region Update
 
 // Change run metadata
 router.patch("/:runId", async (req, res) => {
@@ -281,9 +280,10 @@ router.patch("/:runId", async (req, res) => {
 	}
 })
 
-/**
- * Delete
- */
+//#endregion
+
+//#region Delete
+
 
 // Delete a run
 router.delete("/:runId", async (req, res) => {
@@ -300,5 +300,7 @@ router.delete("/:runId", async (req, res) => {
 		return res.status(500).send({ error: "Unhandled server error" });
 	}
 });
+
+//#endregion
 
 module.exports = router;

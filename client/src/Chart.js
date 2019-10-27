@@ -193,7 +193,7 @@ export class ChartModal extends Component {
 				<Modal.Footer>
 					<div className="d-flex modal-btn-flex">
 					<Button variant="secondary" onClick={_ => this.props.onClose(false)}>Close</Button>
-					<Button variant="secondary" download={this.state.filename} href={"data:text/csv;base64," + createSpreadsheet(this.props.data, this.props.filters)} >Download CSV</Button>
+					<Button variant="secondary" download={this.state.filename} href={createSpreadsheet(this.props.data, this.props.filters)} >Download CSV</Button>
 						{shouldZoom && <Button variant="secondary" onClick={_ => this.zoomOut()}>Zoom Out</Button>}
 						<Button variant="primary" onClick={_ => this.props.onClose(true)}>Add Variable</Button>
 					</div>

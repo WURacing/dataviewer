@@ -75,5 +75,8 @@ export function createSpreadsheet(data, filters) {
 		lines.push(line);
 	}
 	const file = lines.join("\r\n");
-	return btoa(file);
+
+	let blob = new Blob([file], {type: "text/csv"});
+	let url = window.URL.createObjectURL(blob);
+	return url;
 }
