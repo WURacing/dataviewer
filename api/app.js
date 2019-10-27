@@ -20,12 +20,15 @@ const pool = mariadb.createPool(config.database);
 var app = express();
 var sse = new SSE();
 
-app.use(logger('dev'));
+app.use(logger(config.logFormat));
 //app.use(express.json()); // handled by formidable library below instead
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors());
 app.use(compression({ filter: (req, res) => !req.url.includes("telemetry")}));
+
+app.get("/", (req, res) => res.status(404).send())
+
 app.use(function addDatabase(req, res, next) {
 	if (req.url.includes("telemetry")) {
 		return next();
@@ -33,7 +36,7 @@ app.use(function addDatabase(req, res, next) {
 	pool.getConnection().then(conn => {
 		req.db = conn;
 		res.on('finish', function removeDatabase() {
-			conn.end();
+			if (conn) conn.release();
 		})
 		next();
 	})
