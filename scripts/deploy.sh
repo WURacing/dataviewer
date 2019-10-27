@@ -1,20 +1,24 @@
 #!/bin/bash
 set -xe
 
+pushd "$(dirname "$0")/.."
+
+if [ "$1" != "server" ]; then
 echo "Deploying client-side code..."
-rsync -rave ssh --delete client/build/ root@server.connor.money:/var/www/apps/data
+# rsync -rave ssh --delete client/build/ root@ec2-3-132-159-198.us-east-2.compute.amazonaws.com:/srv/dataclient
+aws s3 sync --acl public-read client/build/ s3://www.data.wuracing.com/
+fi
 
 echo "Deploying server-side code..."
 FNAME=$(npm pack ./api)
-scp $FNAME root@server.connor.money:/home/webapi/
-ssh root@server.connor.money <<EOF
+scp $FNAME ec2-user@ec2-3-132-159-198.us-east-2.compute.amazonaws.com:/srv/dataserver
+ssh ec2-user@ec2-3-132-159-198.us-east-2.compute.amazonaws.com <<EOF
 set -xe
-pushd /home/webapi/dataviewerapi
-su webapi <<AAA
-set -xe
-tar -xavf ../$FNAME --strip-components=1 package
+pushd /srv/dataserver
+tar -xavf $FNAME --strip-components=1 package
 npm install
 forever stopall
-forever start bin/www
-AAA
+DATA_PASS=$DATA_PASS forever start bin/www
 EOF
+
+popd

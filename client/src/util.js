@@ -55,7 +55,7 @@ export function createSpreadsheet(data, filters) {
 	let last = {};
 	for (let dp of data) {
 		Object.assign(last, dp);
-		const line = dp.time.toFixed(0) + "," + filters.reduce((accum, filter, index) => {
+		const line = dp.time + "," + filters.reduce((accum, filter, index) => {
 			let val;
 			if (dp.hasOwnProperty(filter.name)) {
 				val = dp[filter.name];
@@ -75,5 +75,8 @@ export function createSpreadsheet(data, filters) {
 		lines.push(line);
 	}
 	const file = lines.join("\r\n");
-	return btoa(file);
+
+	let blob = new Blob([file], {type: "text/csv"});
+	let url = window.URL.createObjectURL(blob);
+	return url;
 }

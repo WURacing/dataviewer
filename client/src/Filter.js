@@ -9,10 +9,9 @@ function filterEqn(filter) {
 }
 
 export class Filter extends Component {
-    state = { loading: false, filter: { name: "", weights: {} } }
+    state = { loading: false, filter: { name: "", expression: "" } }
     nameRef = React.createRef();
-    variableRef = React.createRef();
-    weightRef = React.createRef();
+    expressionRef = React.createRef();
 
     componentDidMount() {
         this.reload();
@@ -52,7 +51,7 @@ export class Filter extends Component {
                     this.nameRef.current.value = "";
                     this.setState(state => {
                         state.filter.name = "";
-                        state.filter.weights = {};
+                        state.filter.expression = "";
                         return state;
                     })
                 }
@@ -71,15 +70,11 @@ export class Filter extends Component {
         })
     }
 
-    addWeight() {
-        // Add a new weight to in progress filter
-        if (this.variableRef.current.value.length < 1) return;
+    expressionChange() {
+        // Record change in form field value
         this.setState(state => {
-            state.filter.weights[this.variableRef.current.value] = this.weightRef.current.value;
+            state.filter.expression = this.expressionRef.current.value;
             return state;
-        }, _ => {
-            this.variableRef.current.value = "";
-            this.weightRef.current.value = 1;
         })
     }
 
@@ -110,11 +105,11 @@ export class Filter extends Component {
                     <>
                         <h1>Filters</h1>
                         <CardColumns>
-                        {this.filterList().map(filter =>
+                        {this.state.filters.map(filter =>
                             <Card style={{ width: '18rem' }}>
                                 <Card.Body>
                                     <Card.Title>{filter.name}</Card.Title>
-                                    <Card.Text>{filterEqn(filter)}</Card.Text>
+                                    <Card.Text>{filter.name} = {filter.expression}</Card.Text>
                                     <Button variant="danger" onClick={() => this.deleteFilter(filter)}>Delete</Button>
                                 </Card.Body>
                             </Card>
@@ -128,33 +123,10 @@ export class Filter extends Component {
                         <h2>Name of Filter</h2>
                         <Form.Control type="text" placeholder="AccelX" required onChange={this.filterNameChange.bind(this)} ref={this.nameRef} />
                     </Form.Group>
-                    <h2>Weights of Raw Data</h2>
-                    <Table striped bordered hover>
-                        <thead><tr><th>Variable</th><th>Weight</th><th></th></tr></thead>
-                        <tbody>
-                            {Object.keys(this.state.filter.weights).map(vari =>
-                                <tr><td>{vari}</td><td>{this.state.filter.weights[vari]}</td></tr>
-                            )}
-                            <tr>
-                                <td>
-                                    <Form.Control type="text" placeholder="EngineSpeed" ref={this.variableRef} />
-                                </td>
-                                <td>
-                                    <Form.Control type="number" placeholder="1" defaultValue="1" ref={this.weightRef} />
-                                </td>
-                                <td>
-                                    <Button variant="primary" onClick={_ => this.addWeight()}>Add</Button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </Table>
-                    <h2>Filter's respective linear combination</h2>
-                    <Card>
-                        <Card.Body>
-                            {filterEqn(this.state.filter)}
-                        </Card.Body>
-                    </Card>
-
+                    <Form.Group controlId="expression">
+                        <h2>Expression</h2>
+                        <Form.Control type="text" placeholder="CGAccelRawX * cos(pi/4) - CGAccelRawY * sin(pi/4)" required onChange={this.expressionChange.bind(this)} ref={this.expressionRef} />
+                    </Form.Group>
                     <Button variant="primary" type="submit" disabled={this.state.loading}>
                         Create
 					</Button>

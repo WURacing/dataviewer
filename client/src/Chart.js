@@ -32,8 +32,17 @@ export class ChartModal extends Component {
 
 	update(state, props) {
 		state.filters = props.filters.slice();
+		// Fake continuity (probably needs a better solution like averaging, but this is O(n))
+		let prev = {};
+		state.data = [];
+		for (let dp of props.data) {
+			let n = {};
+			Object.assign(prev, dp);
+			Object.assign(n, prev);
+			state.data.push(n);
+		}		
 		// Load filters and calculate the LCs
-		state.data = filterData(props.data, props.filters);
+		state.data = filterData(state.data, props.filters);
 		state.title = props.filters.reduce((accum, filter, index) => {
 			if (index < props.filters.length - 1) {
 				return accum + filter.name + " and ";
@@ -55,13 +64,6 @@ export class ChartModal extends Component {
 		state.filename = "DATA_" + time + "_" + props.filters.map(filter => filter.name).join("-") + ".csv";
 
 
-		// Fake continuity (probably needs a better solution like averaging, but this is O(n))
-		let prev = {};
-		for (let dp of state.data) {
-			Object.assign(prev, dp);
-			Object.assign(dp, prev);
-			dp.time = parseInt(dp.time);
-		}
 
 		const shouldZoom = Number.isInteger(state.zoom.left) && Number.isInteger(state.zoom.right);
 
@@ -194,7 +196,7 @@ export class ChartModal extends Component {
 				<Modal.Footer>
 					<div className="d-flex modal-btn-flex">
 					<Button variant="secondary" onClick={_ => this.props.onClose(false)}>Close</Button>
-					<Button variant="secondary" download={this.state.filename} href={"data:text/csv;base64," + createSpreadsheet(this.props.data, this.props.filters)} >Download CSV</Button>
+					<Button variant="secondary" download={this.state.filename} href={createSpreadsheet(this.props.data, this.props.filters)} >Download CSV</Button>
 						{shouldZoom && <Button variant="secondary" onClick={_ => this.zoomOut()}>Zoom Out</Button>}
 						<Button variant="primary" onClick={_ => this.props.onClose(true)}>Add Variable</Button>
 					</div>
