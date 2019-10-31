@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
 import { Form, Card, Button, Table, CardColumns } from 'react-bootstrap';
 import { handleClientAsyncError, handleServerError } from './util';
+import { create, all } from 'mathjs'
+import MathJax from "react-mathjax";
+const math = create(all);
+
 
 function filterEqn(filter) {
     return filter.name + " = " + Object.keys(filter.weights).map((vari) =>
@@ -104,17 +108,20 @@ export class Filter extends Component {
                 {this.state.filters &&
                     <>
                         <h1>Filters</h1>
-                        <CardColumns>
+                        <MathJax.Provider>
+                        {/* <CardColumns> */}
                         {this.state.filters.map(filter =>
-                            <Card style={{ width: '18rem' }}>
+                            <Card style={{ width: '100%' }}>
                                 <Card.Body>
                                     <Card.Title>{filter.name}</Card.Title>
-                                    <Card.Text>{filter.name} = {filter.expression}</Card.Text>
+                                    {/* <Card.Text>{filter.name} = {filter.expression}</Card.Text> */}
+                                    <MathJax.Node formula={math.parse(filter.expression).toTex()} />
                                     <Button variant="danger" onClick={() => this.deleteFilter(filter)}>Delete</Button>
                                 </Card.Body>
                             </Card>
                         )}
-                        </CardColumns>
+                        {/* </CardColumns> */}
+                        </MathJax.Provider>
                     </>
                 }
                 <h1>Add New Filter</h1>
