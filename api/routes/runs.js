@@ -76,10 +76,10 @@ class Tablify extends Transform {
 
 /**
  * Get a list of filters applicable to a data collection
- * @param {{name: string, expression: string}[]} globalFilters 
- * @param {{id: number, name: string}[]} globalVariables 
- * @param {{id: number, name: string}[]} localVariables 
- * @returns {{name: string, expression: string, required: number[]}[]}
+ * @param {{name: string, expression: string, description?: string, units?: string}[]} globalFilters 
+ * @param {{id: number, name: string, description?: string, units?: string}[]} globalVariables 
+ * @param {{id: number, name: string, description?: string, units?: string}[]} localVariables 
+ * @returns {{name: string, expression: string, required: number[], description?: string, units?: string}[]}
  */
 function getApplicableFilters(globalFilters, globalVariables, localVariables) {
 	let allVarNames = globalVariables.map((v) => v.name);
@@ -170,10 +170,10 @@ router.get("/:runId/details", async (req, res) => {
 		}
 		let meta = runs[0];
 		// read general information
-		let globalVariables = await req.db.query("SELECT id, name FROM datavariables");
-		let globalFilters = await req.db.query("SELECT name, expression FROM datafilters");
+		let globalVariables = await req.db.query("SELECT id, name, description, units FROM datavariables");
+		let globalFilters = await req.db.query("SELECT name, expression, description, units FROM datafilters");
 		// get all variables applicable
-		let localVariables = await req.db.query("SELECT DISTINCT datavariables.id, datavariables.name FROM datapoints USE INDEX (datapoints_UN) INNER JOIN datavariables ON datavariables.id = datapoints.variable WHERE datapoints.time BETWEEN ? AND ?", [meta.start, meta.end]);
+		let localVariables = await req.db.query("SELECT DISTINCT datavariables.id, datavariables.name, datavariables.description, datavariables.units FROM datapoints USE INDEX (datapoints_UN) INNER JOIN datavariables ON datavariables.id = datapoints.variable WHERE datapoints.time BETWEEN ? AND ?", [meta.start, meta.end]);
 		// build a list of filters we can actually use for this run
 		let localFilters = getApplicableFilters(globalFilters, globalVariables, localVariables);
 		return res.status(200).send({ meta: meta, variables: localVariables, filters: localFilters });
@@ -195,10 +195,10 @@ router.get("/range/:start/:end/details", async (req, res) => {
 			meta.location = runs[0].location;
 		}
 		// read general information
-		let globalVariables = await req.db.query("SELECT id, name FROM datavariables");
-		let globalFilters = await req.db.query("SELECT name, expression FROM datafilters");
+		let globalVariables = await req.db.query("SELECT id, name, description, units FROM datavariables");
+		let globalFilters = await req.db.query("SELECT name, expression, description, units FROM datafilters");
 		// get all variables applicable
-		let localVariables = await req.db.query("SELECT DISTINCT datavariables.id, datavariables.name FROM datapoints USE INDEX (datapoints_UN) INNER JOIN datavariables ON datavariables.id = datapoints.variable WHERE datapoints.time BETWEEN ? AND ?", [meta.start, meta.end]);
+		let localVariables = await req.db.query("SELECT DISTINCT datavariables.id, datavariables.name, datavariables.description, datavariables.units FROM datapoints USE INDEX (datapoints_UN) INNER JOIN datavariables ON datavariables.id = datapoints.variable WHERE datapoints.time BETWEEN ? AND ?", [meta.start, meta.end]);
 		// build a list of filters we can actually use for this run
 		let localFilters = getApplicableFilters(globalFilters, globalVariables, localVariables);
 		return res.status(200).send({ meta: meta, variables: localVariables, filters: localFilters });

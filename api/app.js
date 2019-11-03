@@ -9,6 +9,7 @@ var compression = require('compression');
 
 var runsRouter = require('./routes/runs');
 var filtersRouter = require('./routes/filters');
+var variablesRouter = require('./routes/variables');
 
 const mariadb = require('mariadb');
 var fs = require("fs");
@@ -55,6 +56,7 @@ app.use(function fileUpload(req, res, next) {
 
 app.use('/api/runs', runsRouter);
 app.use('/api/filters', filtersRouter);
+app.use('/api/variables', variablesRouter);
 app.get('/api/telemetry', sse.init);
 
 app.postTelemetryMessage = function(key, value) {

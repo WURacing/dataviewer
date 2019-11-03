@@ -30,7 +30,7 @@ class App extends Component {
 						<Nav className="mr-auto">
 						<Nav.Link href="#home" onClick={this.openRuns}>Runs</Nav.Link>
 						<Nav.Link onClick={this.openUpload}>Upload</Nav.Link>
-						<Nav.Link onClick={this.openFilters}>Filters</Nav.Link>
+						<Nav.Link onClick={this.openFilters}>Filters & Variables</Nav.Link>
 						<Nav.Link onClick={this.openTelemetry}>Telemetry</Nav.Link>
 					</Nav>
 					</Navbar.Collapse>

@@ -35,3 +35,8 @@ CREATE TABLE `datafilters` (
   `expression` varchar(512) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='Filter data using free-form mathematical expressions. May be implemented using JS eval or math.js.';
+
+ALTER TABLE datafilters ADD COLUMN description VARCHAR(100);
+ALTER TABLE datafilters ADD COLUMN units VARCHAR(20);
+ALTER TABLE datavariables ADD COLUMN description VARCHAR(100);
+ALTER TABLE datavariables ADD COLUMN units VARCHAR(20);

@@ -203,7 +203,7 @@ export class Run extends Component {
 						{this.state.filters.map((filter, index) =>
 							<Card key={`filter${index}`} style={{ width: '18rem' }}>
 								<Card.Body>
-									<Card.Title>{filter.name}</Card.Title>
+									<Card.Title>{filter.name}{filter.units && ` (${filter.units})`}</Card.Title>
 									<Card.Link href="#plot" onClick={_ => this.plotFilter(filter)}>Plot</Card.Link>
 								</Card.Body>
 							</Card>
@@ -214,7 +214,7 @@ export class Run extends Component {
 						{this.state.variables.map((variable, index) =>
 							<Card key={`variable${index}`} style={{ width: '18rem' }}>
 								<Card.Body>
-									<Card.Title>{variable.name}</Card.Title>
+									<Card.Title>{variable.name}{variable.units && ` (${variable.units})`}</Card.Title>
 									<Card.Link href="#plot" onClick={_ => this.plotVariable(variable)}>Plot</Card.Link>
 								</Card.Body>
 							</Card>

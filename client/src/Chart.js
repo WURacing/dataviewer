@@ -44,10 +44,11 @@ export class ChartModal extends Component {
 		// Load filters and calculate the LCs
 		state.data = filterData(state.data, props.filters);
 		state.title = props.filters.reduce((accum, filter, index) => {
+			let s = accum + filter.name + (filter.units ? ` (${filter.units})` : "");
 			if (index < props.filters.length - 1) {
-				return accum + filter.name + " and ";
+				return s + " and ";
 			} else {
-				return accum + filter.name;
+				return s;
 			}
 		}, "");
 		let time = "";
