@@ -75,6 +75,22 @@ class Tablify extends Transform {
 }
 
 /**
+ * 
+ * @param {{name: string, expression: string, description?: string, units?: string}} filter 
+ * @param {{id: number, name: string, description?: string, units?: string}[]} globalVariables 
+ * @returns {number[]}
+ */
+function getRequiredVariables(filter, globalVariables) {
+	let required = [];
+	for (let variable of globalVariables) {
+		if (filter.expression.includes(variable.name)) {
+			required.push(variable.id);
+		}
+	}
+	return required;
+}
+
+/**
  * Get a list of filters applicable to a data collection
  * @param {{name: string, expression: string, description?: string, units?: string}[]} globalFilters 
  * @param {{id: number, name: string, description?: string, units?: string}[]} globalVariables 
@@ -97,12 +113,7 @@ function getApplicableFilters(globalFilters, globalVariables, localVariables) {
 	})
 	// store information about required variables in each remaining filter
 	for (let filter of applicableFilters) {
-		filter.required = [];
-		for (let variable of localVariables) {
-			if (filter.expression.includes(variable.name)) {
-				filter.required.push(variable.id);
-			}
-		}
+		filter.required = getRequiredVariables(filter, globalVariables);
 	}
 
 	return applicableFilters;
@@ -209,12 +220,13 @@ router.get("/range/:start/:end/details", async (req, res) => {
 });
 
 // Read a sample of points for a range of time
-router.get("/points/:start/:end/:sampleSize/:variables\.:ext?", async (req, res) => {
+router.get("/points/:start/:end/:sampleSize/:variables/:filters\.:ext?", async (req, res) => {
 	try {
 		let start = new Date(req.params.start);
 		let end = new Date(req.params.end);
 		let sample = parseInt(req.params.sampleSize);
 		let variables = req.params.variables.split(",").map(varstr => parseInt(varstr));
+		let filters = req.params.filters.split(",").map(filterstr => parseInt(filterstr));
 
 		let varmap = await readVars(req.db);
 		// avoid hitting the DB if we don't have to
