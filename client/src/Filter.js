@@ -177,6 +177,15 @@ export class Filter extends Component {
         window.scrollTo(0, 0);
     }
 
+    formulaValid(expression) {
+        try {
+            math.parse(expression);
+        } catch (error) {
+            return false;
+        }
+        return true;
+    }
+
     render() {
         return (
             <div className="filters">
@@ -239,7 +248,11 @@ export class Filter extends Component {
                                 <Card.Body>
                                     <Card.Title>{filter.name}{filter.units && ` (${filter.units})`}</Card.Title>
                                     <p>{filter.description}</p>
-                                    <MathJax.Node formula={math.parse(filter.expression).toTex()} />
+                                    {this.formulaValid(filter.expression) &&
+                                        <MathJax.Node formula={math.parse(filter.expression).toTex()} />
+                                        ||
+                                        <p>INVALID FORMULA! {filter.expression}</p>
+                                    }
                                     <Button variant="danger" onClick={() => this.deleteFilter(filter)}>Delete</Button>
                                     <Button variant="primary" onClick={() => this.editFilter(filter)}>Edit</Button>
                                 </Card.Body>
