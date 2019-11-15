@@ -1,5 +1,5 @@
 import { create, all } from 'mathjs'
-const math = create(all);
+export const math = create(all);
 
 // filter: {name: __, weights: {sigName: weight}}
 // find linear combination

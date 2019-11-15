@@ -58,13 +58,18 @@ export class Run extends Component {
 	 */
 	plotFilter(filter) {
 		this.setState((state, props) => {
-			let filters = state.plot.concat([filter]);
 			let vars = [];
+			let filters = state.plot.concat([filter]);
 			for (let filter of filters) {
 				vars = vars.concat(filter.required);
 			}
-			this.downloadData(vars);
-			return { plot: filters, showWait: true, waitMessage: "Waiting to download data..." };
+			if (vars.length > 0) {
+				this.downloadData(vars);
+				return { plot: filters, showWait: true, waitMessage: "Waiting to download data..." };
+			} else {
+				alert("There's no way to plot this filter! It doesn't depend on any variables. Please check the expression on the Filters tab! Alternatively, if you're trying to plot a constant function, please plot any other variable first!");
+				return {  };
+			}
 		});
 	}
 	closePlot(keepAlive) {

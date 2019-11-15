@@ -3,7 +3,7 @@ import { Button, Modal } from 'react-bootstrap';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceArea } from 'recharts';
 import { timeString, PREC, createSpreadsheet, leftPad } from './util';
 import './Chart.css';
-import { filterData } from './filters';
+import { filterData, math } from './filters';
 
 const colors = ["red", "blue", "green", "purple", "orange", "gray", "gold", "indigo", "navy", "darkslategray"];
 function getColor(i) {
@@ -42,7 +42,12 @@ export class ChartModal extends Component {
 			state.data.push(n);
 		}		
 		// Load filters and calculate the LCs
-		state.data = filterData(state.data, props.filters);
+		try {
+			state.data = filterData(state.data, props.filters);
+		} catch (error) {
+			alert(`Filtering data failed! One of your filters probably has a syntax error! Please fix it, or complain to Connor! \n Error: ${error}`);
+			state.data = [];
+		}
 		state.title = props.filters.reduce((accum, filter, index) => {
 			let s = accum + filter.name + (filter.units ? ` (${filter.units})` : "");
 			if (index < props.filters.length - 1) {
@@ -97,6 +102,20 @@ export class ChartModal extends Component {
 				}
 				return false;
 			});
+		}
+		// remove imaginary components
+		let imaginary = false;
+		for (let dp of state.data) {
+			for (let key of Object.keys(dp)) {
+				let val = dp[key];
+				if (math.im(val) !== 0) {
+					if (!imaginary) {
+						imaginary = true;
+						alert(`${key} contains complex numbers with nonzero imaginary components! We can't plot these! The plot will only be showing the real components! Please download the spreadsheet to see the true values, or fix the domain errors in your filter!`);	
+					}
+					dp[key] = math.re(val);
+				}
+			}
 		}
 		return state;
 	}
