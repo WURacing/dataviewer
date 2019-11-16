@@ -36,6 +36,18 @@ export function handleServerError(response) {
 	}
 }
 
+export class ServerError extends Error {
+	constructor(message, cause) {
+		super(message);
+		this.cause = cause;
+		this.name = 'ServerError';
+	}
+
+	toString() {
+		return `${super.toString()} -- caused by ${this.cause.toString()}`;
+	}
+}
+
 /**
  * 
  * @param {{time: number, [key: string]: number}[]} data 

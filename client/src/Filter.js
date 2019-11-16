@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Form, Card, Button, Table, CardColumns } from 'react-bootstrap';
-import { handleClientAsyncError, handleServerError } from './util';
+import { ServerError } from './util';
 import { create, all } from 'mathjs'
 import MathJax from "react-mathjax";
 const math = create(all);
@@ -20,7 +20,7 @@ export class Filter extends Component {
     unitsRef = React.createRef();
 
     componentDidMount() {
-        this.reload().catch(handleClientAsyncError);
+        this.reload().catch(error => this.setState(() => { throw new ServerError("Loading filters failed", error); }));
     }
 
     async reload() {
@@ -153,7 +153,7 @@ export class Filter extends Component {
                 // Reload displayu
                 this.reload();
             })
-            .catch(handleClientAsyncError)
+			.catch(error => this.setState(() => { throw new ServerError(`Deleting filter ${filter.name} failed`, error); }))
             .finally(_ => {
                 this.setState({ loading: false })
             })

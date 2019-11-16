@@ -5,6 +5,7 @@ import { Upload } from './UploadRun';
 import { Run } from './RunDetail';
 import { Filter } from './Filter';
 import { Telemetry } from './Telemetry';
+import { ErrorBoundary } from './Error';
 
 import './App.css';
 
@@ -51,6 +52,7 @@ class App extends Component {
 					}
 				</Breadcrumb>
 				<div className="content">
+				<ErrorBoundary>
 				{ this.state.mode === "runs" &&
 					<Runs onOpenRun={this.openRun} />
 				}
@@ -66,6 +68,7 @@ class App extends Component {
 				{ this.state.mode === "telemetry" &&
 					<Telemetry />
 				}
+				</ErrorBoundary>
 				</div>
 			</div>
 		);
