@@ -4,7 +4,7 @@ import { createFilterForVariable } from './filters';
 import ChartModal from './Chart';
 import DialogModal from './Dialog';
 import './RunDetail.css';
-import { handleServerError, handleClientAsyncError } from './util';
+import { ServerError } from './util';
 
 export class Run extends Component {
 	constructor(props) {
@@ -15,9 +15,8 @@ export class Run extends Component {
 		// download this run's data
 		fetch(this.getRunURL())
 			.then(res => res.json())
-			.then(handleServerError)
 			.then(run => this.load(run))
-			.catch(handleClientAsyncError);
+			.catch(error => this.setState(() => { throw new ServerError(`Downloading run data for ${this.getRunURL()} failed`, error); }));
 	}
 	getRunTechnicalType() {
 		let props = this.props;
@@ -29,7 +28,7 @@ export class Run extends Component {
 	}
 	getRunURL() {
 		let props = this.props;
-		if (this.getRunTechnicalType() == "range") {
+		if (this.getRunTechnicalType() === "range") {
 			return process.env.REACT_APP_API_SERVER + `/api/runs/range/${props.id.start.toISOString()}/${props.id.end.toISOString()}/details`;
 		} else {
 			return process.env.REACT_APP_API_SERVER + `/api/runs/${props.id}/details`;
@@ -64,7 +63,8 @@ export class Run extends Component {
 				vars = vars.concat(filter.required);
 			}
 			if (vars.length > 0) {
-				this.downloadData(vars);
+				this.downloadData(vars)
+				.catch(error => this.setState(() => { throw new ServerError("Downloading data for run failed, " + JSON.stringify({ start: this.state.run.meta.start, end: this.state.run.meta.end, vars: vars}), error); }));
 				return { plot: filters, showWait: true, waitMessage: "Waiting to download data..." };
 			} else {
 				alert("There's no way to plot this filter! It doesn't depend on any variables. Please check the expression on the Filters tab! Alternatively, if you're trying to plot a constant function, please plot any other variable first!");
@@ -147,7 +147,7 @@ export class Run extends Component {
 					this.setState({ saved: true })
 				}
 			})
-			.catch(handleClientAsyncError)
+			.catch(error => this.setState(() => { throw new ServerError(`Updating run ${this.props.id} failed, ${JSON.stringify(data)}`, error); }))
 			.finally(_ => {
 				this.setState({ loading: false })
 			})
@@ -168,7 +168,7 @@ export class Run extends Component {
 						</div>
 					}
 					<Jumbotron>
-						{this.getRunTechnicalType() == "single" && <>
+						{this.getRunTechnicalType() === "single" && <>
 							<h1>Run {this.state.run.meta.runofday} on {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.meta.start))}</h1>
 							<p>Location: {this.state.run.meta.location}</p>
 							<Form onSubmit={this.handleSubmit.bind(this)}>
@@ -198,7 +198,7 @@ export class Run extends Component {
 								{this.state.saved && <p>Saved.</p>}
 							</Form>
 						</>}
-						{this.getRunTechnicalType() == "range" && <>
+						{this.getRunTechnicalType() === "range" && <>
 							<h1>Data from {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.meta.start))} to {new Intl.DateTimeFormat("en-US").format(new Date(this.state.run.meta.end))}</h1>
 							<p>Location: {this.state.run.meta.location}</p>
 						</>}

@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Form, Button, ProgressBar } from 'react-bootstrap';
-import { handleClientAsyncError } from './util';
 
 /**
  * 
