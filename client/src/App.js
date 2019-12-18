@@ -24,48 +24,57 @@ class App extends Component {
 		return (
 			<div className="App">
 				<Navbar bg="light" expand="lg">
-					<Navbar.Brand href="#home">Data Logger</Navbar.Brand>
+					<Navbar.Brand href="#home">
+						<img
+							alt=""
+							src="./logo.svg"
+							width="50"
+							height="30"
+							className="d-inline-block align-top"
+						/>{' '}
+						Data Logger
+					</Navbar.Brand>
 					<Navbar.Toggle aria-controls="basic-navbar-nav" />
 					<Navbar.Collapse id="basic-navbar-nav">
 						<Nav className="mr-auto">
-						<Nav.Link href="#home" onClick={this.openRuns}>Runs</Nav.Link>
-						<Nav.Link onClick={this.openUpload}>Upload</Nav.Link>
-						<Nav.Link onClick={this.openFilters}>Filters & Variables</Nav.Link>
-						<Nav.Link onClick={this.openTelemetry}>Telemetry</Nav.Link>
-					</Nav>
+							<Nav.Link href="#home" onClick={this.openRuns}>Runs</Nav.Link>
+							<Nav.Link onClick={this.openUpload}>Upload</Nav.Link>
+							<Nav.Link onClick={this.openFilters}>Filters & Variables</Nav.Link>
+							<Nav.Link onClick={this.openTelemetry}>Telemetry</Nav.Link>
+						</Nav>
 					</Navbar.Collapse>
 				</Navbar>
 				<Breadcrumb>
 					<Breadcrumb.Item href="#" active={this.state.mode === "runs"} onClick={this.openRuns}>Home</Breadcrumb.Item>
-					{ this.state.mode === "single" &&
-							<Breadcrumb.Item href="#" active>Run {this.runid}</Breadcrumb.Item>
+					{this.state.mode === "single" &&
+						<Breadcrumb.Item href="#" active>Run {this.runid}</Breadcrumb.Item>
 					}
-					{ this.state.mode === "upload" &&
-							<Breadcrumb.Item href="#" active>Upload</Breadcrumb.Item>
+					{this.state.mode === "upload" &&
+						<Breadcrumb.Item href="#" active>Upload</Breadcrumb.Item>
 					}
-					{ this.state.mode === "filters" &&
-							<Breadcrumb.Item href="#" active>Filters</Breadcrumb.Item>
+					{this.state.mode === "filters" &&
+						<Breadcrumb.Item href="#" active>Filters</Breadcrumb.Item>
 					}
-					{ this.state.mode === "telemetry" &&
-							<Breadcrumb.Item href="#" active>Telemetry</Breadcrumb.Item>
+					{this.state.mode === "telemetry" &&
+						<Breadcrumb.Item href="#" active>Telemetry</Breadcrumb.Item>
 					}
 				</Breadcrumb>
 				<div className="content">
-				{ this.state.mode === "runs" &&
-					<Runs onOpenRun={this.openRun} />
-				}
-				{ this.state.mode === "upload" &&
-					<Upload onOpenRun={this.openRun} />
-				}
-				{ this.state.mode === "single" &&
-					<Run id={this.state.runid} />
-				}
-				{ this.state.mode === "filters" &&
-					<Filter />
-				}
-				{ this.state.mode === "telemetry" &&
-					<Telemetry />
-				}
+					{this.state.mode === "runs" &&
+						<Runs onOpenRun={this.openRun} />
+					}
+					{this.state.mode === "upload" &&
+						<Upload onOpenRun={this.openRun} />
+					}
+					{this.state.mode === "single" &&
+						<Run id={this.state.runid} />
+					}
+					{this.state.mode === "filters" &&
+						<Filter />
+					}
+					{this.state.mode === "telemetry" &&
+						<Telemetry />
+					}
 				</div>
 			</div>
 		);
@@ -73,7 +82,7 @@ class App extends Component {
 
 	// switch to page for specific run
 	openRun(id) {
-		this.setState({ mode: "single", runid: id});
+		this.setState({ mode: "single", runid: id });
 	}
 
 	// switch to runs page
@@ -95,7 +104,7 @@ class App extends Component {
 	openTelemetry() {
 		this.setState({ mode: "telemetry" });
 	}
-	
+
 }
 
 export default App;
