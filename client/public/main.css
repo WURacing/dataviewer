@@ -1,0 +1,9 @@
+/* Override alignment on bootstrap table */
+.table td {
+    vertical-align: middle;
+}
+
+.card-body .container {
+    align-items: center;
+    margin-bottom: 1em;
+}

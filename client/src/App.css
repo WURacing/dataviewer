@@ -1,8 +1,8 @@
 .App {
+	margin: 0 auto;
+}
+
+.content {
 	max-width: 1000px;
 	margin: 0 auto;
-	margin-top: 20px;
-}
-.content {
-	margin: 1em;
 }
