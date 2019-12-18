@@ -7,7 +7,7 @@ import { faTrash, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 export class Runs extends Component {
 	constructor(props) {
 		super(props);
-		this.state = { runs: [], sort: 'run' };
+		this.state = { runs: [], sort: 'run', filter: undefined, filteredRuns: [] };
 		this.deleteRun = this.deleteRun.bind(this);
 	}
 
@@ -21,7 +21,7 @@ export class Runs extends Component {
 			.then(res => res.json())
 			.then(handleServerError)
 			.then(runs => runs.sort((a, b) => a.date - b.date))
-			.then(runs => this.setState({ runs }))
+			.then(runs => this.setState({ runs, filteredRuns: runs }))
 			.catch(handleClientAsyncError);
 	}
 
@@ -62,6 +62,28 @@ export class Runs extends Component {
 		}
 	}
 
+	setFilter(e) {
+		console.log(e.target.value);
+		let text = e.target.value;
+		if (text == '') {
+			this.setState({
+				filter: undefined,
+				filteredRuns: this.state.runs
+			});
+		} else {
+			let filteredRuns = this.state.runs.filter((run) => {
+				return run.runofday.toString().includes(text) ||
+					run.location.includes(text) ||
+					(run.description && run.description.toString().includes(text)) ||
+					(run.type && run.type.toString().includes(text));
+			});
+			this.setState({
+				filter: text,
+				filteredRuns
+			});
+		}
+	}
+
 	sortRuns(a, b) {
 		if (this.state.sort == 'run') {
 			return a < b
@@ -72,7 +94,7 @@ export class Runs extends Component {
 
 	render() {
 		let days = [];
-		for (let run of this.state.runs) {
+		for (let run of this.state.filteredRuns) {
 			let date = new Date(run.date).toDateString();
 			if (days.length === 0 || days[days.length - 1].dateStr !== date) {
 				let newDay = { dateStr: date, runs: [run] };
@@ -82,6 +104,8 @@ export class Runs extends Component {
 			}
 		}
 		days.reverse();
+
+		console.log(this.state.runs)
 
 		return (
 			<>
@@ -93,6 +117,14 @@ export class Runs extends Component {
 						<Form.Label column sm={5}>View all data for a specific date:</Form.Label>
 						<Col sm={7}>
 							<Form.Control type="date" placeholder="Date" onChange={e => this.setDate(e)} />
+						</Col>
+					</Form.Group>
+				</Form>
+				<Form>
+					<Form.Group as={Row} controlId="formDate">
+						<Form.Label column sm={5}>Filter Runs (Run Number, Location, Type, Note):</Form.Label>
+						<Col sm={7}>
+							<Form.Control type="text" placeholder="Acceleration" onChange={e => this.setFilter(e)} />
 						</Col>
 					</Form.Group>
 				</Form>
