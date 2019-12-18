@@ -1,6 +1,6 @@
 {
 	"name": "dataviewerclient",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "Engine Data Visualization Platform - Client Webapp",
 	"keywords": [
 		"data",
@@ -9,9 +9,12 @@
 	"homepage": "http://www.data.wuracing.com/",
 	"license": "GPL-3.0",
 	"author": "Connor Monahan <cmonahan@wustl.edu> (https://connormonahan.net/)",
-	"repository": "bitbucket:cse330/spring2019-cp-group-457221",
+	"repository": "https://github.com/wuracing/dataviewer",
 	"private": true,
 	"dependencies": {
+		"@fortawesome/fontawesome-svg-core": "^1.2.26",
+		"@fortawesome/free-solid-svg-icons": "^5.12.0",
+		"@fortawesome/react-fontawesome": "^0.1.8",
 		"bootstrap": "^4.3.1",
 		"mathjs": "^6.2.3",
 		"react": "^16.11.0",

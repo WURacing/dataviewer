@@ -63,7 +63,6 @@ export class Runs extends Component {
 	}
 
 	setFilter(e) {
-		console.log(e.target.value);
 		let text = e.target.value;
 		if (text == '') {
 			this.setState({
@@ -105,8 +104,6 @@ export class Runs extends Component {
 		}
 		days.reverse();
 
-		console.log(this.state.runs)
-
 		return (
 			<>
 				<Alert key={1} variant="primary">
@@ -130,7 +127,7 @@ export class Runs extends Component {
 				</Form>
 				<Accordion defaultActiveKey="day0">
 					{days.map((day, dayi) =>
-						<Card>
+						<Card key={`day${dayi}`}>
 							<Card.Header>
 								<Accordion.Toggle as={Button} variant="link" eventKey={`day${dayi}`}>
 									{day.dateStr} at {day.runs[0].location}
