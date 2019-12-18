@@ -36,6 +36,18 @@ export function handleServerError(response) {
 	}
 }
 
+export class ServerError extends Error {
+	constructor(message, cause) {
+		super(message);
+		this.cause = cause;
+		this.name = 'ServerError';
+	}
+
+	toString() {
+		return `${super.toString()} -- caused by ${this.cause.toString()}`;
+	}
+}
+
 /**
  * 
  * @param {{time: number, [key: string]: number}[]} data 
@@ -51,7 +63,14 @@ export function createSpreadsheet(data, filters) {
 		}
 	}, "");
 	lines.push(header);
-	data = filterData(data, filters);
+	try {
+		data = filterData(data, filters);
+	} catch (error) {
+		data = [];
+		let blob = new Blob([error], {type: "text/plain"});
+		let url = window.URL.createObjectURL(blob);
+		return url;	
+	}
 	let last = {};
 	for (let dp of data) {
 		Object.assign(last, dp);
@@ -65,7 +84,10 @@ export function createSpreadsheet(data, filters) {
 			} else {
 				val = 0;
 			}
-			let string = val.toPrecision(PREC);
+			let string = val;
+			if (val.hasOwnProperty("toPrecision")) {
+				string = val.toPrecision(PREC);
+			}
 			if (index < filters.length - 1) {
 				return accum + string + ",";
 			} else {

@@ -3,6 +3,7 @@ import { Alert, Button, Card, CardColumns, Form, Row, Col, Accordion, Table, Con
 import { handleClientAsyncError, handleServerError } from './util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { ServerError } from './util';
 
 export class Runs extends Component {
 	constructor(props) {
@@ -19,22 +20,19 @@ export class Runs extends Component {
 	async reload() {
 		fetch(process.env.REACT_APP_API_SERVER + "/api/runs")
 			.then(res => res.json())
-			.then(handleServerError)
 			.then(runs => runs.sort((a, b) => a.date - b.date))
 			.then(runs => this.setState({ runs, filteredRuns: runs }))
-			.catch(handleClientAsyncError);
+			.catch(error => this.setState(() => { throw new ServerError("Loading runs failed", error); }));
+
 	}
 
 	deleteRun(id) {
-		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + id, {
-			method: "DELETE"
-		})
+		fetch(process.env.REACT_APP_API_SERVER + "/api/runs/" + id, { method: "DELETE" })
 			.then((resp) => resp.json())
-			.then(handleServerError)
 			.then((result) => {
 				this.setState(state => ({ runs: state.runs.filter(run => run.id !== id) }))
 			})
-			.catch(handleClientAsyncError);
+			.catch(error => this.setState(() => { throw new ServerError(`Deleting run ${id} failed`, error); }));
 	}
 
 	setDate(e) {
@@ -106,9 +104,6 @@ export class Runs extends Component {
 
 		return (
 			<>
-				<Alert key={1} variant="primary">
-					Update 10/23/19: Please send your criticism to @Connor Monahan and @ethanshry!
-			</Alert>
 				<Form>
 					<Form.Group as={Row} controlId="formDate">
 						<Form.Label column sm={5}>View all data for a specific date:</Form.Label>

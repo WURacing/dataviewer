@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Form, Card, Button, Table, CardColumns } from 'react-bootstrap';
-import { handleClientAsyncError, handleServerError } from './util';
+import { ServerError } from './util';
 import { create, all } from 'mathjs'
 import MathJax from "react-mathjax";
 const math = create(all);
@@ -20,7 +20,7 @@ export class Filter extends Component {
     unitsRef = React.createRef();
 
     componentDidMount() {
-        this.reload().catch(handleClientAsyncError);
+        this.reload().catch(error => this.setState(() => { throw new ServerError("Loading filters failed", error); }));
     }
 
     async reload() {
@@ -153,7 +153,7 @@ export class Filter extends Component {
                 // Reload displayu
                 this.reload();
             })
-            .catch(handleClientAsyncError)
+			.catch(error => this.setState(() => { throw new ServerError(`Deleting filter ${filter.name} failed`, error); }))
             .finally(_ => {
                 this.setState({ loading: false })
             })
@@ -175,6 +175,15 @@ export class Filter extends Component {
         this.unitsRef.current.value = variable.units;
         this.setState({ mode: 2, filter: variable });
         window.scrollTo(0, 0);
+    }
+
+    formulaValid(expression) {
+        try {
+            math.parse(expression);
+        } catch (error) {
+            return false;
+        }
+        return true;
     }
 
     render() {
@@ -239,7 +248,11 @@ export class Filter extends Component {
                                 <Card.Body>
                                     <Card.Title>{filter.name}{filter.units && ` (${filter.units})`}</Card.Title>
                                     <p>{filter.description}</p>
-                                    <MathJax.Node formula={math.parse(filter.expression).toTex()} />
+                                    {this.formulaValid(filter.expression) &&
+                                        <MathJax.Node formula={math.parse(filter.expression).toTex()} />
+                                        ||
+                                        <p>INVALID FORMULA! {filter.expression}</p>
+                                    }
                                     <Button variant="danger" onClick={() => this.deleteFilter(filter)}>Delete</Button>
                                     <Button variant="primary" onClick={() => this.editFilter(filter)}>Edit</Button>
                                 </Card.Body>

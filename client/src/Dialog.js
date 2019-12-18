@@ -4,16 +4,6 @@ import './Chart.css';
 
 
 export class DialogModal extends Component {
-	constructor(props) {
-		super(props);
-	}
-
-	componentDidMount() {
-	}
-
-	componentDidUpdate(oldprops) {
-	}
-
 	render() {
 		return (
 			<Modal show={true} onHide={this.props.onClose} size="lg">

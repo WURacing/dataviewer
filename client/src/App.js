@@ -5,6 +5,7 @@ import { Upload } from './UploadRun';
 import { Run } from './RunDetail';
 import { Filter } from './Filter';
 import { Telemetry } from './Telemetry';
+import { ErrorBoundary } from './Error';
 
 import './App.css';
 
@@ -60,21 +61,23 @@ class App extends Component {
 					}
 				</Breadcrumb>
 				<div className="content">
-					{this.state.mode === "runs" &&
-						<Runs onOpenRun={this.openRun} />
-					}
-					{this.state.mode === "upload" &&
-						<Upload onOpenRun={this.openRun} />
-					}
-					{this.state.mode === "single" &&
-						<Run id={this.state.runid} />
-					}
-					{this.state.mode === "filters" &&
-						<Filter />
-					}
-					{this.state.mode === "telemetry" &&
-						<Telemetry />
-					}
+				<ErrorBoundary>
+				{ this.state.mode === "runs" &&
+					<Runs onOpenRun={this.openRun} />
+				}
+				{ this.state.mode === "upload" &&
+					<Upload onOpenRun={this.openRun} />
+				}
+				{ this.state.mode === "single" &&
+					<Run id={this.state.runid} />
+				}
+				{ this.state.mode === "filters" &&
+					<Filter />
+				}
+				{ this.state.mode === "telemetry" &&
+					<Telemetry />
+				}
+				</ErrorBoundary>
 				</div>
 			</div>
 		);
