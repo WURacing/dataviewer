@@ -5,6 +5,7 @@ import ChartModal from './Chart';
 import DialogModal from './Dialog';
 import './RunDetail.css';
 import { ServerError } from './util';
+import SortedTable from './components/SortableTable';
 
 export class Run extends Component {
 	constructor(props) {
@@ -64,11 +65,11 @@ export class Run extends Component {
 			}
 			if (vars.length > 0) {
 				this.downloadData(vars)
-				.catch(error => this.setState(() => { throw new ServerError("Downloading data for run failed, " + JSON.stringify({ start: this.state.run.meta.start, end: this.state.run.meta.end, vars: vars}), error); }));
+					.catch(error => this.setState(() => { throw new ServerError("Downloading data for run failed, " + JSON.stringify({ start: this.state.run.meta.start, end: this.state.run.meta.end, vars: vars }), error); }));
 				return { plot: filters, showWait: true, waitMessage: "Waiting to download data..." };
 			} else {
 				alert("There's no way to plot this filter! It doesn't depend on any variables. Please check the expression on the Filters tab! Alternatively, if you're trying to plot a constant function, please plot any other variable first!");
-				return {  };
+				return {};
 			}
 		});
 	}
@@ -153,6 +154,66 @@ export class Run extends Component {
 			})
 	}
 
+	getFilterColumns() {
+		return [
+			{
+				key: 'name',
+				text: 'Name'
+			},
+			{
+				key: 'units',
+				text: 'units'
+			},
+			{
+				key: 'description',
+				text: 'Description'
+			},
+			{
+				key: 'plot',
+				text: ''
+			}
+		];
+	}
+
+	getFilterRows(filters) {
+		return filters.map((filter) => {
+			console.log(filter);
+			return {
+				name: filter.name,
+				units: filter.units != undefined ? filter.units : '',
+				description: filter.description,
+				plot: <a href="#plot" onClick={_ => this.plotFilter(filter)}>Plot</a>,
+			}
+		});
+	}
+
+	getSignalColumns() {
+		return [
+			{
+				key: 'name',
+				text: 'Name'
+			},
+			{
+				key: 'units',
+				text: 'units'
+			},
+			{
+				key: 'plot',
+				text: ''
+			}
+		];
+	}
+
+	getSignalRows(signals) {
+		return signals.map((signal) => {
+			return {
+				name: signal.name,
+				units: signal.units != undefined ? signal.units : '',
+				plot: <a href="#plot" onClick={_ => this.plotVariable(signal)}>Plot</a>,
+			}
+		});
+	}
+
 	render() {
 		if (this.state.run && this.state.filters) {
 			return (
@@ -204,27 +265,19 @@ export class Run extends Component {
 						</>}
 					</Jumbotron>
 					<h1>Filters applicable to this run</h1>
-					<CardColumns>
-						{this.state.filters.map((filter, index) =>
-							<Card key={`filter${index}`} style={{ width: '18rem' }}>
-								<Card.Body>
-									<Card.Title>{filter.name}{filter.units && ` (${filter.units})`}</Card.Title>
-									<Card.Link href="#plot" onClick={_ => this.plotFilter(filter)}>Plot</Card.Link>
-								</Card.Body>
-							</Card>
-						)}
-					</CardColumns>
+					<SortedTable
+						columns={this.getFilterColumns()}
+						rows={this.getFilterRows(this.state.filters)}
+						sortColumns={undefined}
+						small
+					/>
 					<h1>Variables in this data</h1>
-					<CardColumns>
-						{this.state.variables.map((variable, index) =>
-							<Card key={`variable${index}`} style={{ width: '18rem' }}>
-								<Card.Body>
-									<Card.Title>{variable.name}{variable.units && ` (${variable.units})`}</Card.Title>
-									<Card.Link href="#plot" onClick={_ => this.plotVariable(variable)}>Plot</Card.Link>
-								</Card.Body>
-							</Card>
-						)}
-					</CardColumns>
+					<SortedTable
+						columns={this.getSignalColumns()}
+						rows={this.getSignalRows(this.state.variables)}
+						sortColumns={undefined}
+						small
+					/>
 				</div>
 			);
 		} else {
