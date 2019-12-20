@@ -5,6 +5,7 @@ import { Upload } from './UploadRun';
 import { Run } from './RunDetail';
 import { Filter } from './Filter';
 import { Telemetry } from './Telemetry';
+import { Graph } from './Graph';
 import { ErrorBoundary } from './Error';
 
 import './App.css';
@@ -12,7 +13,7 @@ import './App.css';
 class App extends Component {
 	constructor(props) {
 		super(props);
-		this.state = { mode: "runs", runid: 0 }
+		this.state = { mode: "graph", runid: 395 }
 		// because member functions can't remember who they are
 		this.openRun = this.openRun.bind(this);
 		this.openRuns = this.openRuns.bind(this);
@@ -61,30 +62,39 @@ class App extends Component {
 					}
 				</Breadcrumb>
 				<div className="content">
-				<ErrorBoundary>
-				{ this.state.mode === "runs" &&
-					<Runs onOpenRun={this.openRun} />
-				}
-				{ this.state.mode === "upload" &&
-					<Upload onOpenRun={this.openRun} />
-				}
-				{ this.state.mode === "single" &&
-					<Run id={this.state.runid} />
-				}
-				{ this.state.mode === "filters" &&
-					<Filter />
-				}
-				{ this.state.mode === "telemetry" &&
-					<Telemetry />
-				}
-				</ErrorBoundary>
+					<ErrorBoundary>
+						{this.state.mode === "runs" &&
+							<Runs onOpenRun={this.openRun} />
+						}
+						{this.state.mode === "upload" &&
+							<Upload onOpenRun={this.openRun} />
+						}
+						{this.state.mode === "single" &&
+							<Run id={this.state.runid} />
+						}
+						{this.state.mode === "filters" &&
+							<Filter />
+						}
+						{this.state.mode === "telemetry" &&
+							<Telemetry />
+						}
+						{this.state.mode === "graph" &&
+							<Graph id={this.state.runid} />
+						}
+					</ErrorBoundary>
 				</div>
 			</div>
 		);
 	}
 
 	// switch to page for specific run
+	openGraph(id) {
+		this.setState({ mode: "graph", runid: id });
+	}
+
+	// switch to page for specific run
 	openRun(id) {
+		console.log(id);
 		this.setState({ mode: "single", runid: id });
 	}
 
