@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Card, CardColumns, Spinner, Jumbotron, Form, Button } from 'react-bootstrap';
 import { createFilterForVariable } from './filters';
-import ChartModal from './Chart';
+import ChartView from './ChartView';
 import DialogModal from './Dialog';
 import './RunDetail.css';
 import { ServerError } from './util';
@@ -156,34 +156,9 @@ export class Graph extends Component {
     render() {
         if (this.state.run && this.state.filters) {
             return (
-                <div className="run">
-                    {this.state.showPlot &&
-                        <div>
-                            <ChartModal data={this.state.data} filters={this.state.plot} onClose={this.closePlot} />
-                        </div>
-                    }
+                <div>
+                    <ChartView data={this.state.data} filters={this.state.plot} />
                     <h1>Filters applicable to this run</h1>
-                    <CardColumns>
-                        {this.state.filters.map((filter, index) =>
-                            <Card key={`filter${index}`} style={{ width: '18rem' }}>
-                                <Card.Body>
-                                    <Card.Title>{filter.name}{filter.units && ` (${filter.units})`}</Card.Title>
-                                    <Card.Link href="#plot" onClick={_ => this.plotFilter(filter)}>Plot</Card.Link>
-                                </Card.Body>
-                            </Card>
-                        )}
-                    </CardColumns>
-                    <h1>Variables in this data</h1>
-                    <CardColumns>
-                        {this.state.variables.map((variable, index) =>
-                            <Card key={`variable${index}`} style={{ width: '18rem' }}>
-                                <Card.Body>
-                                    <Card.Title>{variable.name}{variable.units && ` (${variable.units})`}</Card.Title>
-                                    <Card.Link href="#plot" onClick={_ => this.plotVariable(variable)}>Plot</Card.Link>
-                                </Card.Body>
-                            </Card>
-                        )}
-                    </CardColumns>
                 </div>
             );
         } else {

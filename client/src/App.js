@@ -5,7 +5,7 @@ import { Upload } from './UploadRun';
 import { Run } from './RunDetail';
 import { Filter } from './Filter';
 import { Telemetry } from './Telemetry';
-import { Graph } from './Graph';
+import { GraphViewer } from './GraphViewer';
 import { ErrorBoundary } from './Error';
 
 import './App.css';
@@ -79,7 +79,7 @@ class App extends Component {
 							<Telemetry />
 						}
 						{this.state.mode === "graph" &&
-							<Graph id={this.state.runid} />
+							<GraphViewer id={this.state.runid} />
 						}
 					</ErrorBoundary>
 				</div>
