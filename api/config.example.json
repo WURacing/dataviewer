@@ -1,0 +1,13 @@
+{
+    "database": {
+        "host": "",
+        "port": 3306,
+        "user": "racing",
+        "password": "",
+        "database": "racing",
+        "connectionLimit": 10,
+        "timezone": "UTC",
+        "compress": true
+    },
+    "logFormat": "combined"
+}
