@@ -4,6 +4,7 @@ import { handleClientAsyncError, handleServerError } from './util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ServerError } from './util';
+import SortedTable from './components/SortableTable';
 
 export class Runs extends Component {
 	constructor(props) {
@@ -81,12 +82,100 @@ export class Runs extends Component {
 		}
 	}
 
-	sortRuns(a, b) {
-		if (this.state.sort == 'run') {
-			return a < b
-		} else {
-			return ((new Date(b.end)).getTime() - (new Date(b.date)).getTime()) - ((new Date(a.end)).getTime() - (new Date(a.date)).getTime());
-		}
+	getRunColumns() {
+		return [
+			{
+				key: 'no',
+				text: '#'
+			},
+			{
+				key: 'time',
+				text: 'Time'
+			},
+			{
+				key: 'duration',
+				text: 'Duration'
+			},
+			{
+				key: 'type',
+				text: 'Type'
+			},
+			{
+				key: 'note',
+				text: 'Note'
+			},
+			{
+				key: 'views',
+				text: 'Views'
+			},
+			{
+				key: 'actions',
+				text: 'Actions'
+			}
+		]
+	}
+
+	getRunRows(runs) {
+		return runs.map((run) => {
+			return {
+				no: run.runofday,
+				time: this.formatTime(run.date),
+				duration: this.formatDuration(new Date(run.end), new Date(run.date)),
+				type: run.type,
+				note: run.description,
+				views: '-', // TODO Implement View Count
+				actions: <>
+					<Button variant="primary" onClick={() => this.props.onOpenRun(run.id)}>View <FontAwesomeIcon icon={faArrowRight} /></Button>
+					<Button variant="danger" onClick={() => this.deleteRun(run.id)}><FontAwesomeIcon icon={faTrash} /></Button>
+				</>
+			}
+		});
+	}
+
+	getRunSortColumns() {
+		return [
+			{
+				key: 'no',
+				text: 'Run #',
+				fn: (key) => {
+					return function (a, b) {
+						console.log(key)
+						console.log(a[key] < b[key])
+						return a[key] - b[key];
+					}
+				}
+			},
+			{
+				key: 'duration',
+				text: 'Duration',
+				fn: (key) => {
+					return function (a, b) {
+						let durA = a[key].slice(0, -1).split('m');
+						let durB = b[key].slice(0, -1).split('m');
+						if (durA.length > 1) {
+							durA = parseInt(durA[0]) * 60 + parseInt(durA[1]);
+						} else {
+							durA = parseInt(durA[0]);
+						}
+						if (durB.length > 1) {
+							durB = parseInt(durB[0]) * 60 + parseInt(durB[1]);
+						} else {
+							durB = parseInt(durB[0]);
+						}
+						return durB - durA;
+					}
+				}
+			},
+			{
+				key: 'views',
+				text: 'Views',
+				fn: (key) => {
+					return function (a, b) {
+						return a[key] - b[key];
+					}
+				}
+			}
+		]
 	}
 
 	render() {
@@ -123,60 +212,30 @@ export class Runs extends Component {
 				<Accordion defaultActiveKey="day0">
 					{days.map((day, dayi) =>
 						<Card key={`day${dayi}`}>
-							<Card.Header>
-								<Accordion.Toggle as={Button} variant="link" eventKey={`day${dayi}`}>
-									{day.dateStr} at {day.runs[0].location}
-								</Accordion.Toggle>
+							<Card.Header as={Row}>
+								<Col>
+									<Accordion.Toggle as={Button} variant="link" eventKey={`day${dayi}`}>
+										{day.dateStr} at {day.runs[0].location}
+									</Accordion.Toggle>
+								</Col>
+								<div>
+									<Button variant="primary" onClick={() => this.setDate({ target: { value: day.dateStr } })}>View all of this day's data</Button>
+								</div>
 							</Card.Header>
 							<Accordion.Collapse eventKey={`day${dayi}`}>
 								<Card.Body>
 									<Container>
 										<Row>
-											<Col>
-												<Button variant="primary" onClick={() => this.setDate({ target: { value: day.dateStr } })}>View all of this day's data</Button>
-											</Col>
-											<Col sm={{ span: 8 }}>
-												<span>Sort By:  </span>
-												<ToggleButtonGroup type="radio" name="sort" value={this.state.sort} onChange={this.changeSort.bind(this)}>
-													<ToggleButton value="run">
-														Run #
-												</ToggleButton>
-													<ToggleButton value="duration">
-														Duration
-												</ToggleButton>
-												</ToggleButtonGroup>
-											</Col>
+
 										</Row>
 									</Container>
 
-									<Table striped size="sm" hover>
-										<thead>
-											<tr>
-												<th>#</th>
-												<th>Time</th>
-												<th>Duration</th>
-												<th>Type</th>
-												<th>Note</th>
-												<th>Actions</th>
-											</tr>
-										</thead>
-										<tbody>
-											{day.runs.sort(this.sortRuns.bind(this)).map((run, runi) =>
-												<tr key={`day${dayi}run${runi}`}>
-													<td>{run.runofday}</td>
-													<td>{this.formatTime(run.date)}</td>
-													<td>{this.formatDuration(new Date(run.end), new Date(run.date))}</td>
-													<td>{run.type}</td>
-													<td>{run.description}</td>
-													<td>
-														<Button variant="primary" onClick={() => this.props.onOpenRun(run.id)}>View <FontAwesomeIcon icon={faArrowRight} /></Button>
-														<Button variant="danger" onClick={() => this.deleteRun(run.id)}><FontAwesomeIcon icon={faTrash} /></Button>
-													</td>
-												</tr>
-											)}
-										</tbody>
-									</Table>
-
+									<SortedTable
+										columns={this.getRunColumns()}
+										rows={this.getRunRows(day.runs)}
+										sortColumns={this.getRunSortColumns()}
+										small
+									/>
 								</Card.Body>
 							</Accordion.Collapse>
 						</Card>
