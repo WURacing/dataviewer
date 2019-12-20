@@ -3,6 +3,7 @@ const fs = require("fs");
 const { Writable, Transform } = require("stream");
 const can = require("@cmonahan/cantools");
 const dbc = require("@wuracing/dbc");
+const AWS = require("aws-sdk");
 
 class ImportQueue {
 	constructor() {
@@ -218,6 +219,24 @@ function importFile(path, id, client) {
 		importQueue.addTracker(id, path);
 
 		console.log(importQueue.queue);
+
+		// upload the entire file to S3, asynchronously with insert operation
+		fs.readFile(path, "utf8", (err, data) => {
+			if (err) throw err;
+			let s3 = new AWS.S3();
+			let params = {
+				Bucket: "carlogs.wuracing.com",
+				Key: `${id}.csv`,
+				Body: data,
+			};
+			s3.putObject(params, (err, data) => {
+				if (err) {
+					console.log(err, err.stack);
+				} else {
+					console.log(`Backed up ${id}.csv`);
+				}
+			});
+		});
 
 		const file = fs.createReadStream(path, {flags: 'r'});
 		const parser = csv({ delimeter: ',', cast: true, columns: true, skip_lines_with_error: true });
