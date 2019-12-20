@@ -121,7 +121,7 @@ router.post('/', async (req, res) => {
 			[req.fields.location, req.fields.runofday]);
 		let id = result.insertId;
 		// queue up processing
-		parser.importFile(req.files.file.path, id, req.db);
+		parser.importFile(req.files.file.path, id, req.db, req.fields.location, req.fields.runofday);
 		// let the client know we're processing now
 		return res.status(202).location(`/api/runs/${id}`).send({ id });
 	} catch (error) {

@@ -4,6 +4,7 @@ const { Writable, Transform } = require("stream");
 const can = require("@cmonahan/cantools");
 const dbc = require("@wuracing/dbc");
 const AWS = require("aws-sdk");
+const qs = require("querystring");
 
 class ImportQueue {
 	constructor() {
@@ -214,7 +215,9 @@ class DebugWriter extends Writable {
  * @param {PoolConnection} client Database client
  * @returns {Promise<any>} completion
  */
-function importFile(path, id, client) {
+function importFile(path, id, client, location, runofday) {
+	location = location || "unknown";
+	runofday = runofday || 0;
 	return new Promise((resolve, reject) => {
 		importQueue.addTracker(id, path);
 
@@ -227,6 +230,10 @@ function importFile(path, id, client) {
 			let params = {
 				Bucket: "carlogs.wuracing.com",
 				Key: `${id}.csv`,
+				Metadata: {
+					"location": location,
+					"runofday": runofday
+				},
 				Body: data,
 			};
 			s3.putObject(params, (err, data) => {
