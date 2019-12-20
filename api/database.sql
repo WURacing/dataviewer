@@ -37,17 +37,4 @@ CREATE TABLE `datavariables` (
   `units` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COMMENT='Names of all variables that have ever been logged. Used as integer reference from datapoints.';
-
-CREATE TABLE `datafilters` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) NOT NULL,
-  `expression` varchar(512) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='Filter data using free-form mathematical expressions. May be implemented using JS eval or math.js.';
-
-ALTER TABLE datafilters ADD COLUMN description VARCHAR(100);
-ALTER TABLE datafilters ADD COLUMN units VARCHAR(20);
-ALTER TABLE datavariables ADD COLUMN description VARCHAR(100);
-ALTER TABLE datavariables ADD COLUMN units VARCHAR(20);
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Names of all variables that have ever been logged. Used as integer reference from datapoints.';
