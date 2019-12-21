@@ -30,7 +30,10 @@ jobs:
       run: cd api && npm test
       env:
         NODE_ENV: test
+        LOG_FORMAT: tiny
         DB_HOST: database
+        DB_PORT: 3306
+        DB_USER: root
         DB_PASS: password
         DB_NAME: test
 
