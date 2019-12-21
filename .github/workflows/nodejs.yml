@@ -3,9 +3,12 @@ name: Node CI
 on: [push]
 
 jobs:
-  build:
+  testapi:
 
     runs-on: ubuntu-latest
+
+    container:
+      image: node:8-jessie
 
     services:
       database:
@@ -19,17 +22,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Use Node.js 8.x
-      uses: actions/setup-node@v1
-      with:
-        node-version: 8.x
-    - name: set up API
+
+    - name: Install API NPM dependencies
       run: |
         cd api
         npm ci
+
+    - name: Test API
+      run: |
         npm test
       env:
-        CI: true
+        NODE_ENV: test
         DB_HOST: database
         DB_PASS: password
         DB_NAME: test
