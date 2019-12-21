@@ -4,7 +4,7 @@ const { Writable, Transform } = require("stream");
 const can = require("@cmonahan/cantools");
 const dbc = require("@wuracing/dbc");
 const AWS = require("aws-sdk");
-const qs = require("querystring");
+const debug = require("debug")("parser");
 
 class ImportQueue {
 	constructor() {
@@ -13,7 +13,7 @@ class ImportQueue {
 
 	addTracker(id, filePath) {
 		let fileStat = fs.statSync(filePath);
-		let item = {id: id, file: filePath, status: 0, count: 0, total: fileStat.size / 47 * 4};
+		let item = { id: id, file: filePath, status: 0, count: 0, total: fileStat.size / 47 * 4 };
 		this.queue[id] = item;
 		return item;
 	}
@@ -37,18 +37,16 @@ let importQueue = new ImportQueue();
 
 class FileFormatDecoder extends Transform {
 	constructor(db) {
-		super({objectMode: true});
+		super({ objectMode: true });
 		this.dbc = can.database.load_file(require.resolve("@wuracing/dbc/" + dbc.dbcfile));
 	}
 	_transform(chunk, encoding, callback) {
-		if (chunk.hasOwnProperty("timestamp") && chunk.hasOwnProperty("sig_name") && chunk.hasOwnProperty("sig_val"))
-		{
-			return callback(null, {date: new Date(chunk.timestamp), name: chunk.sig_name, value: chunk.sig_val})
+		if (chunk.hasOwnProperty("timestamp") && chunk.hasOwnProperty("sig_name") && chunk.hasOwnProperty("sig_val")) {
+			return callback(null, { date: new Date(chunk.timestamp), name: chunk.sig_name, value: chunk.sig_val })
 		}
 		if (chunk.hasOwnProperty("year") && chunk.hasOwnProperty("month") && chunk.hasOwnProperty("day")
-		&& chunk.hasOwnProperty("hour") && chunk.hasOwnProperty("min") && chunk.hasOwnProperty("sec")
-		&& chunk.hasOwnProperty("ms") && chunk.hasOwnProperty("id") && chunk.hasOwnProperty("data"))
-		{
+			&& chunk.hasOwnProperty("hour") && chunk.hasOwnProperty("min") && chunk.hasOwnProperty("sec")
+			&& chunk.hasOwnProperty("ms") && chunk.hasOwnProperty("id") && chunk.hasOwnProperty("data")) {
 			if (chunk.data.length != 16) {
 				// incomplete row, skip!
 				return callback();
@@ -66,7 +64,7 @@ class FileFormatDecoder extends Transform {
 			let data = Buffer.from(chunk.data, "hex");
 			let parsed = this.dbc.decode_message(id, data);
 			for (let key of Object.keys(parsed)) {
-				this.push({date: d, name: key, value: parsed[key]});
+				this.push({ date: d, name: key, value: parsed[key] });
 			}
 			return callback();
 		}
@@ -77,23 +75,23 @@ class FileFormatDecoder extends Transform {
 
 class MariaVariableLookup extends Transform {
 	constructor(db) {
-		super({objectMode: true});
+		super({ objectMode: true });
 		this.db = db;
 		this.cache = new VarCache(this.db);
 	}
 	_transform(chunk, encoding, callback) {
 		this.cache.getId(chunk.name)
-		.then(varid => {
-			callback(null, [chunk.date, varid, chunk.value, chunk.value])
-		}).catch(error => {
-			callback(error, null)
-		})
+			.then(varid => {
+				callback(null, [chunk.date, varid, chunk.value, chunk.value])
+			}).catch(error => {
+				callback(error, null)
+			})
 	}
 }
 
 class MariaDatabaseWriter extends Writable {
 	constructor(client, id, status) {
-		super({objectMode: true, highWaterMark: 1000});
+		super({ objectMode: true, highWaterMark: 1000 });
 		this.db = client;
 		this.id = id;
 		this.status = status;
@@ -104,7 +102,7 @@ class MariaDatabaseWriter extends Writable {
 	_write(chunk, encoding, callback) {
 		this.block.push(chunk);
 		if (this.block.length >= 1000) {
-			this.insertBlock().then(_ => callback()).catch(err => {callback(err)});
+			this.insertBlock().then(_ => callback()).catch(err => { callback(err) });
 		} else {
 			callback();
 		}
@@ -120,36 +118,36 @@ class MariaDatabaseWriter extends Writable {
 			this.startTS = bmintime;
 		if (!this.endTS || bmaxtime > this.endTS)
 			this.endTS = bmaxtime;
-		
-		console.log(`Inserting block of length ${block.length}`)
+
+		debug(`Inserting block of length ${block.length}`)
 		return this.db.batch("INSERT INTO datapoints (time,variable,value) VALUES (?,?,?) ON DUPLICATE KEY UPDATE value=?", block)
-		.then(_ => {
-			this.status(block.length);
-			this.block = [];
-			return true;
-		})
-		.catch(error => {
-			console.error(error);
-			console.log(this.block);
-			this.db.rollback();
-			this.block = [];
-			throw error;
-		})
+			.then(_ => {
+				this.status(block.length);
+				this.block = [];
+				return true;
+			})
+			.catch(error => {
+				console.error(error);
+				debug(this.block);
+				this.db.rollback();
+				this.block = [];
+				throw error;
+			})
 	}
 
 	_final(callback) {
-		console.log(`Saving run from ${this.startTS} to ${this.endTS}`)
+		debug(`Saving run from ${this.startTS} to ${this.endTS}`)
 		this.insertBlock()
-		.then(_ => this.db.query("UPDATE datarunmeta SET start = ?, end = ? WHERE id = ?", [this.startTS, this.endTS, this.id]))
-		.then(result => {
-			this.db.commit();
-			callback()
-		})
-		.catch(error => {
-			console.error(error);
-			this.db.rollback();
-			callback(error)
-		})
+			.then(_ => this.db.query("UPDATE datarunmeta SET start = ?, end = ? WHERE id = ?", [this.startTS, this.endTS, this.id]))
+			.then(result => {
+				this.db.commit();
+				callback()
+			})
+			.catch(error => {
+				console.error(error);
+				this.db.rollback();
+				callback(error)
+			})
 	}
 }
 
@@ -157,14 +155,14 @@ class VarCache {
 	constructor(db) {
 		this.db = db;
 		/** @type {[key: string]: number} */
-		this.map = {}; 
+		this.map = {};
 		this.loaded = false;
 	}
 	loadVariables() {
 		if (this.loaded)
 			return Promise.resolve();
 
-		console.log("Loading variables")
+		debug("Loading variables")
 		return this.db.query("SELECT id, name FROM datavariables")
 			.then((data) => {
 				let row;
@@ -172,7 +170,7 @@ class VarCache {
 					this.map[row.name] = row.id;
 				}
 				this.loaded = true;
-				console.log("Variables are loaded")
+				debug("Variables are loaded")
 				return true;
 			})
 	}
@@ -187,7 +185,7 @@ class VarCache {
 	}
 
 	addNew(varstr) {
-		console.log(`Creating entry for ${varstr}`)
+		debug(`Creating entry for ${varstr}`)
 		return this.db.query("INSERT INTO datavariables (name) VALUES (?)", [varstr])
 			.then(result => {
 				this.map[varstr] = result.insertId;
@@ -198,11 +196,11 @@ class VarCache {
 
 class DebugWriter extends Writable {
 	constructor() {
-		super({objectMode: true, highWaterMark: 1000});
+		super({ objectMode: true, highWaterMark: 1000 });
 	}
 
 	_write(chunk, encoding, callback) {
-		console.log(chunk);
+		debug(chunk);
 		callback();
 	}
 }
@@ -221,31 +219,31 @@ function importFile(path, id, client, location, runofday) {
 	return new Promise((resolve, reject) => {
 		importQueue.addTracker(id, path);
 
-		console.log(importQueue.queue);
-
 		// upload the entire file to S3, asynchronously with insert operation
-		fs.readFile(path, "utf8", (err, data) => {
-			if (err) throw err;
-			let s3 = new AWS.S3();
-			let params = {
-				Bucket: "carlogs.wuracing.com",
-				Key: `${id}.csv`,
-				Metadata: {
-					"location": location,
-					"runofday": runofday
-				},
-				Body: data,
-			};
-			s3.putObject(params, (err, data) => {
-				if (err) {
-					console.log(err, err.stack);
-				} else {
-					console.log(`Backed up ${id}.csv`);
-				}
+		if (process.env.BACKUP_S3 == "true") {
+			fs.readFile(path, "utf8", (err, data) => {
+				if (err) throw err;
+				let s3 = new AWS.S3();
+				let params = {
+					Bucket: "carlogs.wuracing.com",
+					Key: `${id}.csv`,
+					Metadata: {
+						"location": location,
+						"runofday": runofday
+					},
+					Body: data,
+				};
+				s3.putObject(params, (err, data) => {
+					if (err) {
+						debug(err, err.stack);
+					} else {
+						debug(`Backed up ${id}.csv`);
+					}
+				});
 			});
-		});
+		}
 
-		const file = fs.createReadStream(path, {flags: 'r'});
+		const file = fs.createReadStream(path, { flags: 'r' });
 		const parser = csv({ delimeter: ',', cast: true, columns: true, skip_lines_with_error: true });
 		let decoder = new FileFormatDecoder();
 		let lookup = new MariaVariableLookup(client);
@@ -255,30 +253,30 @@ function importFile(path, id, client, location, runofday) {
 		});
 		file.on('error', e => {
 			console.warn(e);
-			importQueue.updateItem(id, {status: 9, error: e});
+			importQueue.updateItem(id, { status: 9, error: e });
 			reject(`File reading failed\nError: ${e}`);
 		}).pipe(parser).on('error', e => {
 			console.warn(e);
-			importQueue.updateItem(id, {status: 9, error: e});
+			importQueue.updateItem(id, { status: 9, error: e });
 			reject(`Parsing CSV data failed\nError: ${e}`);
 		}).pipe(decoder).on('error', e => {
 			console.warn(e);
-			importQueue.updateItem(id, {status: 9, error: e});
+			importQueue.updateItem(id, { status: 9, error: e });
 			reject(`Decoding file format failed\nError: ${e}`);
 		}).pipe(lookup).on('error', e => {
 			console.warn(e);
-			importQueue.updateItem(id, {status: 9, error: e});
+			importQueue.updateItem(id, { status: 9, error: e });
 			reject(`Searching for variables failed\nError: ${e}`);
 		}).pipe(writer).on('error', e => {
 			console.warn(e);
-			importQueue.updateItem(id, {status: 9, error: e});
+			importQueue.updateItem(id, { status: 9, error: e });
 			reject(`Database writing failed\nError: ${e}`);
 		}).on("finish", () => {
-			importQueue.updateItem(id, {status: 10});
+			importQueue.updateItem(id, { status: 10 });
 			resolve();
 		});
 
-		importQueue.updateItem(id, {status: 1});
+		importQueue.updateItem(id, { status: 1 });
 	});
 }
 
