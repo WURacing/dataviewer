@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { Navbar, Nav, Breadcrumb } from 'react-bootstrap';
-import { Runs } from './Runs';
-import { Upload } from './UploadRun';
-import { Run } from './RunDetail';
-import { Filter } from './Filter';
-import { Telemetry } from './Telemetry';
+import { Runs } from './RunsView';
+import { Upload } from './UploadView';
+import { Run } from './RunDetailView';
+import { Filter } from './FiltersView';
+import { Telemetry } from './TelemetryView';
 import { ErrorBoundary } from './Error';
 
 import './App.css';
@@ -61,23 +61,23 @@ class App extends Component {
 					}
 				</Breadcrumb>
 				<div className="content">
-				<ErrorBoundary>
-				{ this.state.mode === "runs" &&
-					<Runs onOpenRun={this.openRun} />
-				}
-				{ this.state.mode === "upload" &&
-					<Upload onOpenRun={this.openRun} />
-				}
-				{ this.state.mode === "single" &&
-					<Run id={this.state.runid} />
-				}
-				{ this.state.mode === "filters" &&
-					<Filter />
-				}
-				{ this.state.mode === "telemetry" &&
-					<Telemetry />
-				}
-				</ErrorBoundary>
+					<ErrorBoundary>
+						{this.state.mode === "runs" &&
+							<Runs onOpenRun={this.openRun} />
+						}
+						{this.state.mode === "upload" &&
+							<Upload onOpenRun={this.openRun} />
+						}
+						{this.state.mode === "single" &&
+							<Run id={this.state.runid} />
+						}
+						{this.state.mode === "filters" &&
+							<Filter />
+						}
+						{this.state.mode === "telemetry" &&
+							<Telemetry />
+						}
+					</ErrorBoundary>
 				</div>
 			</div>
 		);

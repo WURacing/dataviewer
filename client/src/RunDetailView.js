@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Card, CardColumns, Spinner, Jumbotron, Form, Button } from 'react-bootstrap';
+import { Spinner, Jumbotron, Form, Button } from 'react-bootstrap';
 import { createFilterForVariable } from './filters';
 import ChartModal from './Chart';
 import DialogModal from './Dialog';
@@ -180,7 +180,7 @@ export class Run extends Component {
 			console.log(filter);
 			return {
 				name: filter.name,
-				units: filter.units != undefined ? filter.units : '',
+				units: filter.units !== undefined ? filter.units : '',
 				description: filter.description,
 				plot: <a href="#plot" onClick={_ => this.plotFilter(filter)}>Plot</a>,
 			}
@@ -208,7 +208,7 @@ export class Run extends Component {
 		return signals.map((signal) => {
 			return {
 				name: signal.name,
-				units: signal.units != undefined ? signal.units : '',
+				units: signal.units !== undefined ? signal.units : '',
 				plot: <a href="#plot" onClick={_ => this.plotVariable(signal)}>Plot</a>,
 			}
 		});

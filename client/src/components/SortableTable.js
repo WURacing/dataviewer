@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Container, Row, Col, Table, ToggleButtonGroup, ToggleButton } from 'react-bootstrap';
+import { Container, Row, Table, ToggleButtonGroup, ToggleButton } from 'react-bootstrap';
 
 export class SortableTable extends Component {
     constructor(props) {
@@ -21,7 +21,7 @@ export class SortableTable extends Component {
     render() {
         return (
             <>
-                {this.props.sortColumns != undefined &&
+                {this.props.sortColumns !== undefined &&
                     <Container>
                         <Row>
                             <span className="align-self-center">Sort By: &nbsp;&nbsp; </span>

@@ -1,16 +1,9 @@
 import React, { Component } from 'react';
-import { Form, Card, Button, Table, CardColumns } from 'react-bootstrap';
+import { Form, Card, Button, CardColumns } from 'react-bootstrap';
 import { ServerError } from './util';
 import { create, all } from 'mathjs'
 import MathJax from "react-mathjax";
 const math = create(all);
-
-
-function filterEqn(filter) {
-    return filter.name + " = " + Object.keys(filter.weights).map((vari) =>
-        `${filter.weights[vari]} * ${vari}`
-    ).join(" + ");
-}
 
 export class Filter extends Component {
     state = { mode: 0, loading: false, filter: { name: "", expression: "" } }
@@ -153,7 +146,7 @@ export class Filter extends Component {
                 // Reload displayu
                 this.reload();
             })
-			.catch(error => this.setState(() => { throw new ServerError(`Deleting filter ${filter.name} failed`, error); }))
+            .catch(error => this.setState(() => { throw new ServerError(`Deleting filter ${filter.name} failed`, error); }))
             .finally(_ => {
                 this.setState({ loading: false })
             })
@@ -233,7 +226,7 @@ export class Filter extends Component {
                         type="submit" disabled={this.state.loading}>
                         {this.state.mode === 0 && "Create"}
                         {this.state.mode > 0 && "Save"}
-					</Button>
+                    </Button>
                     <Button variant="warning"
                         onClick={() => this.clearForm()} disabled={this.state.loading}>
                         Clear
@@ -243,21 +236,21 @@ export class Filter extends Component {
                     <>
                         <h1>Filters</h1>
                         <MathJax.Provider>
-                        {this.state.filters.map(filter =>
-                            <Card style={{ width: '100%' }}>
-                                <Card.Body>
-                                    <Card.Title>{filter.name}{filter.units && ` (${filter.units})`}</Card.Title>
-                                    <p>{filter.description}</p>
-                                    {this.formulaValid(filter.expression) &&
-                                        <MathJax.Node formula={math.parse(filter.expression).toTex()} />
-                                        ||
-                                        <p>INVALID FORMULA! {filter.expression}</p>
-                                    }
-                                    <Button variant="danger" onClick={() => this.deleteFilter(filter)}>Delete</Button>
-                                    <Button variant="primary" onClick={() => this.editFilter(filter)}>Edit</Button>
-                                </Card.Body>
-                            </Card>
-                        )}
+                            {this.state.filters.map(filter =>
+                                <Card style={{ width: '100%' }}>
+                                    <Card.Body>
+                                        <Card.Title>{filter.name}{filter.units && ` (${filter.units})`}</Card.Title>
+                                        <p>{filter.description}</p>
+                                        {this.formulaValid(filter.expression) &&
+                                            <MathJax.Node formula={math.parse(filter.expression).toTex()} />
+                                            ||
+                                            <p>INVALID FORMULA! {filter.expression}</p>
+                                        }
+                                        <Button variant="danger" onClick={() => this.deleteFilter(filter)}>Delete</Button>
+                                        <Button variant="primary" onClick={() => this.editFilter(filter)}>Edit</Button>
+                                    </Card.Body>
+                                </Card>
+                            )}
                         </MathJax.Provider>
                     </>
                 }
@@ -272,7 +265,7 @@ export class Filter extends Component {
                                         <p>{variable.description}</p>
                                         <Button variant="primary" onClick={() => this.editVariable(variable)}>Edit</Button>
                                     </Card.Body>
-                                </Card>                        
+                                </Card>
                             )}
                         </CardColumns>
                     </>

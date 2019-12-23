@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { Alert, Button, Card, CardColumns, Form, Row, Col, Accordion, Table, Container, ToggleButtonGroup, ToggleButton } from 'react-bootstrap';
-import { handleClientAsyncError, handleServerError } from './util';
+import { Button, Card, Form, Row, Col, Accordion } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ServerError } from './util';
@@ -63,7 +62,7 @@ export class Runs extends Component {
 
 	setFilter(e) {
 		let text = e.target.value;
-		if (text == '') {
+		if (text === '') {
 			this.setState({
 				filter: undefined,
 				filteredRuns: this.state.runs
@@ -194,7 +193,7 @@ export class Runs extends Component {
 		return (
 			<>
 				<Form>
-					<Form.Group as={Row} controlId="formDate">
+					<Form.Group as={Row} controlId="dateFilter">
 						<Form.Label column sm={5}>View all data for a specific date:</Form.Label>
 						<Col sm={7}>
 							<Form.Control type="date" placeholder="Date" onChange={e => this.setDate(e)} />
@@ -202,7 +201,7 @@ export class Runs extends Component {
 					</Form.Group>
 				</Form>
 				<Form>
-					<Form.Group as={Row} controlId="formDate">
+					<Form.Group as={Row} controlId="genericFilter">
 						<Form.Label column sm={5}>Filter Runs (Run Number, Location, Type, Note):</Form.Label>
 						<Col sm={7}>
 							<Form.Control type="text" placeholder="Acceleration" onChange={e => this.setFilter(e)} />
@@ -224,12 +223,6 @@ export class Runs extends Component {
 							</Card.Header>
 							<Accordion.Collapse eventKey={`day${dayi}`}>
 								<Card.Body>
-									<Container>
-										<Row>
-
-										</Row>
-									</Container>
-
 									<SortedTable
 										columns={this.getRunColumns()}
 										rows={this.getRunRows(day.runs)}

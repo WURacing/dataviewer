@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 export class ErrorBoundary extends React.Component {
 	constructor(props) {
@@ -25,7 +25,7 @@ export class ErrorBoundary extends React.Component {
 
 	componentDidCatch(error, info) {
 		// Display fallback UI
-		this.setState({ hasError: true, error: error, info: info.componentStack, reporturl: this.getReportURL(error,info)});
+		this.setState({ hasError: true, error: error, info: info.componentStack, reporturl: this.getReportURL(error, info) });
 		// You can also log the error to an error reporting service
 		// logErrorToMyService(error, info);
 	}
@@ -38,9 +38,9 @@ export class ErrorBoundary extends React.Component {
 					<h1>Something went wrong.</h1>
 					<p><a href={this.state.reporturl}>Please click here to report the error to Ethan and Connor.</a> You will need a GitHub account.</p>
 					<h2>Details we know about this error</h2>
-					<p>{ this.state.error.toString() }</p>
+					<p>{this.state.error.toString()}</p>
 					<h2>Where the error occurred</h2>
-					<p>{ this.state.info }</p>
+					<p>{this.state.info}</p>
 				</>
 			);
 		}
