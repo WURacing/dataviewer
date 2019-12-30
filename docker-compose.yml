@@ -8,7 +8,7 @@ services:
     volumes:
     - "./data:/data"
     environment:
-      REDIS_URI: "redis://redis:6379"
+      REDIS_URL: "redis://redis:6379"
       DATABASE_URL: "mysql+mysqlconnector://root:gofastgofast@db/data"
     networks:
     - front
@@ -20,7 +20,7 @@ services:
     volumes:
     - "./data:/data"
     environment:
-      REDIS_URI: "redis://redis:6379"
+      REDIS_URL: "redis://redis:6379"
     networks:
     - back
   
@@ -42,6 +42,17 @@ services:
       MYSQL_DATABASE: data
     networks:
     - front
+  
+  telemetry:
+    image: wuracing/telemetryapi
+    environment:
+      REDIS_URL: "redis://redis:6379"
+    ports:
+    - "9999:9999/udp"
+    - "3002:80"
+    networks:
+    - front
+    - back
 
 networks:
   front:

@@ -135,9 +135,14 @@ class RangeDetails(Resource):
 
         variables = []
         filters = []
+        uniq_vars = set()
         for run in runs:
             with RunDataPoints(run.id) as data:
-                v = models.Variable.query.filter(models.Variable.id.in_(data.variables())).all()
+                lclvars = set(data.variables())
+                remvars = lclvars.difference(uniq_vars)
+                uniq_vars = uniq_vars.union(lclvars)
+
+                v = models.Variable.query.filter(models.Variable.id.in_(remvars)).all()
                 variables += [f.serialize() for f in v]
 
         meta = {

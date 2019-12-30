@@ -41,11 +41,18 @@ class RunDataPoints:
         vids = self.variables()
         cols = []
         for vid in variable_ids:
-            cols.append(vids.index(vid))
+            try:
+                cols.append(vids.index(vid))
+            except ValueError:
+                # this run doesn't contain this variable
+                cols.append("BAD")
 
         data = []
         for col in cols:
-            data.append(self.db["data"][:, col])
+            if col == "BAD":
+                data.append(np.full((self.db["data"].shape[0],), np.nan))
+            else:
+                data.append(self.db["data"][:, col])
         # data = self.db["data"][:, cols]
         data = np.array(data).transpose()
         return data

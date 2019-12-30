@@ -9,5 +9,5 @@ class Config(object):
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER") or os.path.join(basedir, 'data', 'uploads')
     DATA_FOLDER = os.environ.get('DATA_FOLDER') or os.path.join(basedir, 'data', 'runs')
     DBC = os.environ.get("DBC")
-    CELERY_BROKER_URL = os.environ.get("REDIS_URI") or 'redis://localhost:6379'
-    CELERY_RESULT_BACKEND = os.environ.get("REDIS_URI") or 'redis://localhost:6379'
+    CELERY_BROKER_URL = os.environ.get("REDIS_URL") or 'redis://localhost:6379'
+    CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL") or 'redis://localhost:6379'
