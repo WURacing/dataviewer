@@ -1,5 +1,5 @@
 import logging
-
+import os
 from celery import Celery
 from flask import Flask
 from .config import Config
@@ -12,6 +12,8 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.config.from_object(Config)
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+os.makedirs(app.config["DATA_FOLDER"], exist_ok=True)
 api = Api(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)

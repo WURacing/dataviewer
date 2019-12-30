@@ -41,17 +41,13 @@ class Runs(Resource):
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         infile = os.path.join(app.config['UPLOAD_FOLDER'], f"{r.id}.csv")
         file.save(infile)
-        outfile = os.path.join(app.config['RUN_DATA_URI'], f"{r.id}.h5")
-        dbcfile = "/Users/connor/Documents/Racing/DBC/dbc/2019.2.1.dbc"
+        outfile = os.path.join(app.config['DATA_FOLDER'], f"{r.id}.h5")
+        dbcfile = app.config["DBC"]
+        # ensure all signals from this DBC are in the variables table
         create_variables(dbcfile)
-        task = import_run.apply_async((infile, outfile, dbcfile, [v.serialize() for v in models.Variable.query.all()]),
+        # queue the background job
+        import_run.apply_async((infile, outfile, dbcfile, [v.serialize() for v in models.Variable.query.all()]),
                                       task_id=f"{r.id}")
-        # r.start = datetime.datetime.fromtimestamp(start/1000)
-        # r.end = datetime.datetime.fromtimestamp(end/1000)
-        # db.session.add(r)
-        # db.session.commit()
-
-        # jobs.append(ProcessingStatus(r))
         return {"id": r.id}, 202
 
 
