@@ -31,16 +31,20 @@ def import_run(self, input_file: str, output_file: str, dbc_file: str, all_varia
     logging.info(f"Loading unique messages from {input_file}")
     for msg in parser.messages():
         total_msg += 1
-        uniq_sig = uniq_sig.union(s.sig_name for s in msg.signals)
-        timestamps = timestamps.union((msg.timestamp,))
+        for s in msg.signals:
+            uniq_sig.add(s.sig_name)
+        timestamps.add(msg.timestamp)
     variables = list(filter(lambda v: v["name"] in uniq_sig, all_variables))
     times = sorted(list(timestamps))
     logging.info(f"Found {len(variables)} unique variables and {len(times)} time points")
-    self.update_state(state='PROGRESS', meta={'status': 1, 'progress': 0.5})
+    self.update_state(state='PROGRESS', meta={'status': 1, 'progress': 0})
     # now actually store the data
     with DataWriter(output_file, variables, times) as writer:
-        for msg in parser.messages():
+        for i, msg in enumerate(parser.messages()):
             writer.write_message(msg)
+
+            if i % 1000 == 0:
+                self.update_state(state='PROGRESS', meta={'status': 1, 'progress': i/len(times)})
 
     start = datetime.datetime.fromtimestamp(writer.start / 1000)
     end = datetime.datetime.fromtimestamp(writer.end / 1000)
@@ -147,6 +151,9 @@ class DataWriter:
 
         self.start = self.end = None
 
+        self.cache = None
+        self.cache_start = 0
+
     def __enter__(self):
         self.db = h5py.File(self.out_file, "w")
 
@@ -158,11 +165,16 @@ class DataWriter:
         self.ts_to_row = {ts: row for row, ts in enumerate(self.times)}
         self.var_to_col = {var["name"]: col for col, var in enumerate(self.variables)}
 
+        self.cache = np.full((min(1000, R), C), np.nan)
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         R = len(self.times)
         C = len(self.variables)
+
+        self.block[self.cache_start:, :] = self.cache
+
         maxlen = max([len(s["name"]) for s in self.variables])
         vnames = self.db.create_dataset("variables/names", (C,), dtype=f"S{maxlen}")
         vnames[:] = np.string_([s["name"] for s in self.variables])
@@ -177,14 +189,22 @@ class DataWriter:
 
     def write_message(self, msg: Message):
         row = self.ts_to_row[msg.timestamp]
+
+        cacheend = self.cache_start + self.cache.shape[0]
+        if row >= cacheend:
+            R = len(self.times)
+            C = len(self.variables)
+            self.block[self.cache_start:cacheend, :] = self.cache
+            self.cache_start += 1000
+            self.cache = np.full((min(1000, R - self.cache_start), C), np.nan)
+
         for sig in msg.signals:
             col = self.var_to_col[sig.sig_name]
-            self.block[row, col] = sig.sig_val
+            self.cache[row - self.cache_start, col] = sig.sig_val
 
-        if self.start is None or msg.timestamp < self.start:
+        if self.start is None:
             self.start = msg.timestamp
-        if self.end is None or msg.timestamp > self.end:
-            self.end = msg.timestamp
+        self.end = msg.timestamp
 
 
 
