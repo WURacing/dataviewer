@@ -88,3 +88,7 @@ dump.rdb
 config.json
 
 /data
+
+.idea
+__pycache__
+app.db
