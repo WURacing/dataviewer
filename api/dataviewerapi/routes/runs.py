@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 from typing import Iterable
 
@@ -6,6 +7,7 @@ import dateutil.parser
 import numpy as np
 from flask import request
 from flask_restful import Resource, reqparse
+from werkzeug.wrappers import Response
 
 from dataviewerapi import db, app, api, models, jobs
 from dataviewerapi.data import RunDataPoints
@@ -47,7 +49,7 @@ class Runs(Resource):
         create_variables(dbcfile)
         # queue the background job
         import_run.apply_async((infile, outfile, dbcfile, [v.serialize() for v in models.Variable.query.all()]),
-                                      task_id=f"{r.id}")
+                               task_id=f"{r.id}")
         return {"id": r.id}, 202
 
 
@@ -70,8 +72,8 @@ class Processing(Resource):
             if 'start' in task.info:
                 # we're done!
                 f: models.Run = models.Run.query.get_or_404(run_id)
-                f.start = datetime.datetime.fromtimestamp(task.info["start"]/1000)
-                f.end = datetime.datetime.fromtimestamp(task.info["end"]/1000)
+                f.start = datetime.datetime.fromtimestamp(task.info["start"] / 1000)
+                f.end = datetime.datetime.fromtimestamp(task.info["end"] / 1000)
                 db.session.add(f)
                 db.session.commit()
         else:
@@ -179,21 +181,33 @@ class DataPoints(Resource):
             ims = dateutil.parser.parse(ims)
             if ims == lm:
                 return None, 304
+
         # load and send data
-        for run in runs:
-            with RunDataPoints(run.id) as data:
-                # read only columns containing desired variables
-                d = data.read(variables)
-                # build entries for each row (unique time point)
-                for time, row in zip(data.times(), d):
-                    entry = {"time": time.isoformat()}
-                    for vn, col in zip(vnames, row):
-                        if not np.isnan(col):  # has data
-                            entry[vn] = col
-                    if len(entry.keys()) > 1:
-                        entries.append(entry)  # TODO stream this
-        return entries, 200, {"Last-Modified": lm.strftime("%a, %d %b %Y %H:%M:%S") + " GMT",
-                              "Cache-Control": "no-cache"}
+        def load_and_send():
+            first = True
+            yield '['
+            for run in runs:
+                with RunDataPoints(run.id) as data:
+                    # read only columns containing desired variables
+                    d = data.read(variables)
+                    # build entries for each row (unique time point)
+                    for time, row in zip(data.times(), d):
+                        entry = {"time": time.isoformat()}
+                        for vn, col in zip(vnames, row):
+                            if not np.isnan(col):  # has data
+                                entry[vn] = col
+                        if len(entry.keys()) > 1:
+                            if first:
+                                first = False
+                            else:
+                                yield ','
+                            yield json.dumps(entry)
+            yield ']'
+
+        return Response(load_and_send(), 200, {"Last-Modified": lm.strftime("%a, %d %b %Y %H:%M:%S") + " GMT",
+                                               "Cache-Control": "must-revalidate",
+                                               "Content-Type": "application/json",
+                                               })
 
 
 api.add_resource(Runs, "/api/runs")
