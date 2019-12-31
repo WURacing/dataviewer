@@ -1,17 +1,40 @@
 import datetime
 import os
 from typing import List
+import logging
 
+import boto3
 import h5py
 import numpy as np
+from botocore.exceptions import ClientError
 
 from dataviewerapi import app
+
+
+logger = logging.getLogger(__name__)
+
+
+def resolve_data_file(run_id: int):
+    input_file = os.path.join(app.config["DATA_FOLDER"], f"{run_id}.h5")
+    if not os.path.exists(input_file):
+        # try downloading the file
+        if app.config["DATA_BUCKET"] is not None:
+            logger.info(f"Retrieving {run_id}.h5...")
+            try:
+                boto3.client("s3").download_file(app.config["DATA_BUCKET"], f"{run_id}.h5", input_file)
+            except ClientError as e:
+                logger.error(e)
+                raise
+        else:
+            logger.error(f"Can't find data {input_file}")
+            raise ValueError()
+    return input_file
 
 
 class RunDataPoints:
     def __init__(self, run_id):
         self.run_id = run_id
-        self.filename = os.path.join(app.config["DATA_FOLDER"], f"{self.run_id}.h5")
+        self.filename = resolve_data_file(self.run_id)
 
     def __enter__(self):
         self.db = h5py.File(self.filename, "r")

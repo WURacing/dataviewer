@@ -2,9 +2,12 @@ import datetime
 import json
 import os
 from typing import Iterable
+import logging
 
+import boto3
 import dateutil.parser
 import numpy as np
+from botocore.exceptions import ClientError
 from flask import request
 from flask_restful import Resource, reqparse
 from werkzeug.wrappers import Response
@@ -18,6 +21,8 @@ from dataviewerapi.jobs.run import create_variables, import_run
 uploadparser = reqparse.RequestParser()
 uploadparser.add_argument("location")
 uploadparser.add_argument("runofday", type=int)
+
+logger = logging.getLogger(__name__)
 
 
 class Runs(Resource):
@@ -39,16 +44,21 @@ class Runs(Resource):
         r = models.Run(location=args["location"], runofday=args["runofday"])
         db.session.add(r)
         db.session.commit()
+        logger.info(f"Initialized run {r.id}")
         # save uploaded file
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         infile = os.path.join(app.config['UPLOAD_FOLDER'], f"{r.id}.csv")
         file.save(infile)
-        outfile = os.path.join(app.config['DATA_FOLDER'], f"{r.id}.h5")
+        if app.config["UPLOAD_BUCKET"] is not None:
+            try:
+                boto3.client("s3").upload_file(infile, app.config["UPLOAD_BUCKET"], f"{r.id}.csv")
+            except ClientError as e:
+                logger.warning(e)
         dbcfile = app.config["DBC"]
         # ensure all signals from this DBC are in the variables table
         create_variables(dbcfile)
         # queue the background job
-        import_run.apply_async((infile, outfile, dbcfile, [v.serialize() for v in models.Variable.query.all()]),
+        import_run.apply_async((r.id, [v.serialize() for v in models.Variable.query.all()]),
                                task_id=f"{r.id}")
         return {"id": r.id}, 202
 
@@ -72,8 +82,8 @@ class Processing(Resource):
             if 'start' in task.info:
                 # we're done!
                 f: models.Run = models.Run.query.get_or_404(run_id)
-                f.start = datetime.datetime.fromtimestamp(task.info["start"] / 1000)
-                f.end = datetime.datetime.fromtimestamp(task.info["end"] / 1000)
+                f.start = dateutil.parser.parse(task.info["start"]).astimezone(datetime.timezone.utc)
+                f.end = dateutil.parser.parse(task.info["end"]).astimezone(datetime.timezone.utc)
                 db.session.add(f)
                 db.session.commit()
         else:

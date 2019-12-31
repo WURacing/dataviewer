@@ -6,11 +6,13 @@ from typing import List
 import logging
 import multiprocessing
 
+import boto3
 import h5py
 import cantools.database
 import numpy as np
+from botocore.exceptions import ClientError
 
-from dataviewerapi import celery
+from dataviewerapi import app, celery
 
 logger = logging.getLogger(__name__)
 
@@ -20,37 +22,85 @@ EXTENDED_MASK = 0x1FFFFFFF
 STANDARD_MASK = 0x7FF
 
 
-@celery.task(bind=True)
-def import_run(self, input_file: str, output_file: str, dbc_file: str, all_variables):
-    parser = CANParser(dbc_file, input_file)
-    self.update_state(state='PROGRESS', meta={'status': 1, 'progress': 0})
-    # first pass: tally total messages and signals
+def resolve_input_file(run_id: int):
+    input_file = os.path.join(app.config["UPLOAD_FOLDER"], f"{run_id}.csv")
+    if not os.path.exists(input_file):
+        # try downloading the file
+        if app.config["UPLOAD_BUCKET"] is not None:
+            logger.info(f"Retrieving {run_id}.csv...")
+            try:
+                boto3.client("s3").download_file(app.config["UPLOAD_BUCKET"], f"{run_id}.csv", input_file)
+            except ClientError as e:
+                logger.error(e)
+                raise
+        else:
+            logger.error(f"Can't find input {input_file}")
+            raise ValueError()
+    return input_file
+
+
+def backup_output_file(run_id: int):
+    output_file = os.path.join(app.config["DATA_FOLDER"], f"{run_id}.h5")
+    if app.config["DATA_BUCKET"] is not None:
+        try:
+            boto3.client("s3").upload_file(output_file, app.config["DATA_BUCKET"], f"{run_id}.h5")
+        except ClientError as e:
+            logger.warning(f"Failed to upload result {output_file}")
+
+
+def load_timestamps_variables(parser, all_variables):
     total_msg = 0
     uniq_sig = set()
     timestamps = set()
-    logging.info(f"Loading unique messages from {input_file}")
-    for msg in parser.messages():
-        total_msg += 1
-        for s in msg.signals:
-            uniq_sig.add(s.sig_name)
-        timestamps.add(msg.timestamp)
+    try:
+        for msg in parser.messages():
+            total_msg += 1
+            for s in msg.signals:
+                uniq_sig.add(s.sig_name)
+            timestamps.add(msg.timestamp)
+    except ValueError:  # bad input format
+        return {'status': 9, 'progress': 0}
+
     variables = list(filter(lambda v: v["name"] in uniq_sig, all_variables))
     times = sorted(list(timestamps))
-    logging.info(f"Found {len(variables)} unique variables and {len(times)} time points")
+    return times, variables
+
+
+@celery.task(bind=True)
+def import_run(self, run_id: int, all_variables):
+    dbc_file = app.config["DBC"]
+    try:
+        input_file = resolve_input_file(run_id)
+    except:
+        return {'status': 9, 'progress': 0}
+
+    parser = CANParser(dbc_file, input_file)
     self.update_state(state='PROGRESS', meta={'status': 1, 'progress': 0})
+
+    # first pass: tally total messages and signals
+    logging.info(f"Loading unique messages from {input_file}")
+    try:
+        timestamps, variables = load_timestamps_variables(parser, all_variables)
+    except:
+        return {'status': 9, 'progress': 0}
+    logging.info(f"Found {len(variables)} unique variables and {len(timestamps)} time points")
+    self.update_state(state='PROGRESS', meta={'status': 1, 'progress': 0})
+
     # now actually store the data
-    with DataWriter(output_file, variables, times) as writer:
+    output_file = os.path.join(app.config["DATA_FOLDER"], f"{run_id}.h5")
+    with DataWriter(output_file, variables, timestamps) as writer:
         for i, msg in enumerate(parser.messages()):
             writer.write_message(msg)
 
             if i % 1000 == 0:
-                self.update_state(state='PROGRESS', meta={'status': 1, 'progress': i/len(times)})
+                self.update_state(state='PROGRESS', meta={'status': 1, 'progress': i/len(timestamps)})
 
-    start = datetime.datetime.fromtimestamp(writer.start / 1000)
-    end = datetime.datetime.fromtimestamp(writer.end / 1000)
+    backup_output_file(run_id)
+    start = datetime.datetime.fromtimestamp(writer.start / 1000, tz=timezone)
+    end = datetime.datetime.fromtimestamp(writer.end / 1000, tz=timezone)
 
-    logging.info(f"Imported {end-start}s of data")
-    return {'status': 10, 'progress': 1, 'start': writer.start, 'end': writer.end}
+    logging.info(f"Imported {end-start} of data")
+    return {'status': 10, 'progress': 1, 'start': str(start), 'end': str(end)}
 
 
 ## below is my modified version of CANParser to fix timezone issue and also be braver than thomas
@@ -92,6 +142,8 @@ class CANParser:
     def packets(self):
         with open(self.input_file, 'r', newline='', errors='ignore') as f:
             reader = csv.DictReader(f)
+            if "year" not in reader.fieldnames:
+                raise ValueError("Invalid CSV file format")
             for row in reader:
                 try:
                     date = datetime.datetime(int(row["year"]), int(row["month"]), int(row["day"]), int(row["hour"]),

@@ -13,3 +13,5 @@ celery
 cantools
 redis
 gunicorn
+boto3
+python-dotenv
