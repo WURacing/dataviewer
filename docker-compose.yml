@@ -1,0 +1,93 @@
+version: "3"
+
+services:
+  api:
+    build: ./api
+    container_name: "dataviewerapi"
+    # ports:
+    # - "3001:80"
+    volumes:
+    - "./data:/data"
+    environment:
+      REDIS_URL: "redis://redis:6379"
+      DATABASE_URL: "mysql+mysqlconnector://root:gofastgofast@db/data"
+    networks:
+    - front
+    - back
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api/runs`,`/api/filters`,`/api/variables`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.middlewares.gzipme.compress=true"
+      - "traefik.http.routers.api.middlewares=gzipme@docker"
+  
+  worker:
+    build: ./api
+    command: celery -A dataviewerapi.celery worker --loglevel=info
+    volumes:
+    - "./data:/data"
+    environment:
+      REDIS_URL: "redis://redis:6379"
+    networks:
+    - back
+  
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+    - "6379"
+    networks:
+    - back
+  
+  db:
+    image: mariadb:10.2
+    container_name: db
+    volumes:
+    - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: gofastgofast
+      MYSQL_DATABASE: data
+    networks:
+    - front
+  
+  telemetry:
+    image: wuracing/telemetryapi
+    environment:
+      REDIS_URL: "redis://redis:6379"
+    ports:
+    - "9999:9999/udp"
+    # - "3002:80"
+    networks:
+    - front
+    - back
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.telemetry.rule=Path(`/api/telemetry`)"
+      - "traefik.http.routers.telemetry.entrypoints=web"
+
+  
+  traefik:
+    image: "traefik:v2.0.0-rc3"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "3001:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - front
+      - back
+
+networks:
+  front:
+  back:
+
+# after docker-compose up, you need to run
+#   docker-compose run api flask db upgrade
+# to create/update the database definitions

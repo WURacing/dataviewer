@@ -6,6 +6,7 @@ import DialogModal from './Dialog';
 import './RunDetail.css';
 import { ServerError } from './util';
 import SortedTable from './components/SortableTable';
+import { clearInterval } from 'timers';
 
 export class Run extends Component {
 	constructor(props) {
@@ -85,6 +86,8 @@ export class Run extends Component {
 
 	async downloadData(vars) {
 		let varstr = vars.join(",");
+		let printout = true;
+		let timer = window.setInterval(() => { printout = true; }, 100);
 		try {
 			let response = await fetch(process.env.REACT_APP_API_SERVER + `/api/runs/points/${new Date(this.state.run.meta.start).toISOString()}/${new Date(this.state.run.meta.end).toISOString()}/0/${varstr}`);
 
@@ -101,8 +104,10 @@ export class Run extends Component {
 
 				chunks.push(value);
 				receivedLength += value.length;
-
-				this.setState({ waitMessage: `Received ${receivedLength} bytes` });
+				if (printout) {
+					printout = false;
+					this.setState({ waitMessage: `Received ${receivedLength} bytes` });
+				}
 			}
 
 			let chunksAll = new Uint8Array(receivedLength);
@@ -120,6 +125,7 @@ export class Run extends Component {
 			this.setState({ showWait: false, waitMessage: err });
 			alert(err);
 		}
+		window.clearInterval(timer);
 
 	}
 
