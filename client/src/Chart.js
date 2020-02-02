@@ -3,7 +3,8 @@ import { Button, Modal } from 'react-bootstrap';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceArea } from 'recharts';
 import { timeString, PREC, createSpreadsheet, leftPad } from './util';
 import './Chart.css';
-import { filterData, math } from './filters';
+import { filterData, math, calculateFilterValue } from './filters';
+import { fft, util } from "fft-js";
 
 const colors = ["red", "blue", "green", "purple", "orange", "gray", "gold", "indigo", "navy", "darkslategray"];
 function getColor(i) {
@@ -172,6 +173,52 @@ export class ChartModal extends Component {
 		})
 	}
 
+	runFFT() {
+		if (this.props.filters.length !== 1) {
+			alert("Please have only one data point.");
+			return;
+		}
+		let data = calculateFilterValue(this.props.filters[0], this.props.data);
+		let size = 1;
+		while (data.length >= size) {
+			size *= 2;
+		}
+		size /= 2;
+		while (data.length > size) {
+			data.pop();
+		}
+		// let time = this.props.data[this.props.data.length - 1].time;
+		// while (data.length < size) {
+		// 	let db = { time: time++};
+		// 	db[this.props.filters[0].name] = 0;
+		// 	data.push(db);
+		// }
+
+		console.log(data.length);
+
+		let datavec = data.map(dp => dp[this.props.filters[0].name]);
+
+		console.log(datavec);
+
+		let phasors = fft(datavec);
+
+		let ts = parseInt(data[data.length - 1].time) - parseInt(data[0].time);
+		ts = (data.length / (ts / 1000));
+
+		console.log(ts);
+		console.log(phasors)
+
+		var frequencies = util.fftFreq(phasors, ts),
+			magnitudes = util.fftMag(phasors); 
+
+		var both = frequencies.map(function (f, ix) {
+			return {frequency: f, magnitude: magnitudes[ix]};
+		});
+
+		this.setState({ fourier: true, frequencies: both });
+
+	}
+
 	render() {
 		const shouldZoom = Number.isInteger(this.state.zoom.left) && Number.isInteger(this.state.zoom.right);
 
@@ -184,7 +231,7 @@ export class ChartModal extends Component {
 				<Modal.Body>
 					<ResponsiveContainer width="100%" height={500}>
 						<LineChart
-							data={this.state.data}
+							data={this.state.fourier && this.state.frequencies || this.state.data}
 							margin={{
 								top: 30, right: 80, left: 30, bottom: 10,
 							}}
@@ -193,12 +240,22 @@ export class ChartModal extends Component {
 							onMouseUp={this.graphEndSelect.bind(this)}
 						>
 							<CartesianGrid strokeDasharray="3 3" />
+							{this.state.fourier &&
+							<XAxis dataKey="frequency" type="number"
+								label={{ value: "Hz", position: "insideBottomRight", offset: -20 }}
+								tickFormatter={ts => ts}
+								allowDataOverflow={true}
+								// domain={[this.state.zoom.left, this.state.zoom.right]}
+							/>						
+							}
+							{!this.state.fourier &&
 							<XAxis dataKey="time" type="number"
 								label={{ value: "Time of Day", position: "insideBottomRight", offset: -20 }}
 								tickFormatter={ts => timeString(new Date(parseInt(ts)))}
 								allowDataOverflow={true}
 								domain={[this.state.zoom.left, this.state.zoom.right]}
 							/>
+							}
 							<YAxis type="number"
 							tickFormatter={val => val.toPrecision(PREC)}
 							/>
@@ -206,7 +263,10 @@ export class ChartModal extends Component {
 								labelFormatter={(label) => timeString(new Date(parseInt(label)))} />
 							<Legend />
 							<ReferenceArea x1={this.state.leftLabel} x2={this.state.rightLabel} stroke="red" strokeOpacity={0.3} />
-							{this.state.filters.map((filter, i) =>
+							{this.state.fourier &&
+								<Line key={"mag"} type="monotone" dataKey={"magnitude"} stroke="red" />
+							}
+							{!this.state.fourier && this.state.filters.map((filter, i) =>
 								<Line key={`line${i}`} type="monotone" dataKey={filter.name} stroke={getColor(i)} />
 							)}
 						</LineChart>
@@ -216,6 +276,7 @@ export class ChartModal extends Component {
 				<Modal.Footer>
 					<div className="d-flex modal-btn-flex">
 					<Button variant="secondary" onClick={_ => this.props.onClose(false)}>Close</Button>
+					<Button variant="secondary" onClick={_ => this.runFFT()}>FourierIt!</Button>
 					<Button variant="secondary" download={this.state.filename} href={createSpreadsheet(this.props.data, this.props.filters)} >Download CSV</Button>
 						{shouldZoom && <Button variant="secondary" onClick={_ => this.zoomOut()}>Zoom Out</Button>}
 						<Button variant="primary" onClick={_ => this.props.onClose(true)}>Add Variable</Button>
