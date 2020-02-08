@@ -63,17 +63,18 @@ export class Runs extends Component {
 
 	setFilter(e) {
 		let text = e.target.value;
-		if (text == '') {
+		if (text === '') {
 			this.setState({
 				filter: undefined,
 				filteredRuns: this.state.runs
 			});
 		} else {
+			let lowerText = text.toLowerCase();
 			let filteredRuns = this.state.runs.filter((run) => {
-				return run.runofday.toString().includes(text) ||
-					run.location.includes(text) ||
-					(run.description && run.description.toString().includes(text)) ||
-					(run.type && run.type.toString().includes(text));
+				return run.runofday.toString().toLowerCase().includes(lowerText) ||
+					run.location.toLowerCase().includes(lowerText) ||
+					(run.description && run.description.toString().toLowerCase().includes(lowerText)) ||
+					(run.type && run.type.toString().toLowerCase().includes(lowerText));
 			});
 			this.setState({
 				filter: text,
