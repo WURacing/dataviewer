@@ -17,3 +17,4 @@ class Config(object):
     DBC = os.environ.get("DBC")
     CELERY_BROKER_URL = os.environ.get("REDIS_URL") or 'redis://localhost:6379'
     CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL") or 'redis://localhost:6379'
+    REDIS_URL = os.environ.get("REDIS_URL") or 'redis://localhost:6379'

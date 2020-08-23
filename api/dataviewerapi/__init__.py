@@ -29,6 +29,7 @@ app.url_map.converters['date'] = DateConverter
 jobs = []
 
 from . import routes, models, data
+import telemetryapi
 
 
 @app.shell_context_processor
