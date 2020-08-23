@@ -3,6 +3,7 @@ flask-restful~=0.3.7
 flask-sqlalchemy~=2.4.1
 flask-migrate~=2.5.2
 flask-cors~=3.0.8
+flask-sse
 mysql-connector-python~=8.0.18
 numpy~=1.18.0
 sympy~=1.5
@@ -13,5 +14,6 @@ celery
 cantools
 redis
 gunicorn
+gevent
 boto3
 python-dotenv
