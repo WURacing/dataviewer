@@ -18,6 +18,13 @@ export class SortableTable extends Component {
         });
     }
 
+    componentWillReceiveProps(nextProps) {
+        this.setState({
+            sortIndex: 0,
+            sortedRows: nextProps.rows
+        });
+    }
+
     render() {
         return (
             <>
