@@ -15,7 +15,7 @@ class IntSetConverter(BaseConverter):
         return {int(v) for v in value.split(',')}
 
     def to_url(self, values):
-        return ','.join(BaseConverter.to_url(value) for value in values)
+        return ','.join(str(value) for value in values)
 
 
 class DateConverter(BaseConverter):
