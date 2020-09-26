@@ -19,10 +19,7 @@ Set up
 API server
 ----------
 
-Copy config.example.json to config.json, and modify accordingly. If the SQL server and API server are running on the same machine, it is advisable to disable the "compress" option. If debugging, it is advisable to change the log format.
-
-To run the server for development purposes, run `npm run dev`, which enables live reloading. The server listens on localhost:3001.
-To run the server for production purposes, run `npm run start` or `node bin/www`.
+Follow the instructions in api/README.md.
 
 Client
 ------
