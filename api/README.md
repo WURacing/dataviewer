@@ -29,11 +29,22 @@ This project has dotenv enabled, so these settings can be stored in a .env file 
 Running
 ===
 
+First, install Docker & Python & Git.
+
 Use the docker-compose.yml file or similar for a production install.
 
-For development, first start a redis server. Then, set your desired settings in .env or similar, and start by creating the SQLite database: `flask db upgrade`.
+For development, first start a redis server. If on Windows, first open Git Bash, if on Mac, first open Terminal. This can be done most easily with `docker run --name some-redis -d redis`.
+Then, set your environment variables. Use something like:
+```
+export DATABASE_URL=sqlite:///test.db
+export REDIS_URL=redis://localhost:6379
+export FLASK_APP=dataviewerapi
+export DBC=/path/to/WURacing/DBC/dbc/2020.1.0.dbc
+```
+
+Lastly, start by creating the SQLite database: `flask db upgrade`.
 
 Start the API server with `flask run`.      
-Finally, start the worker process with `celery -A dataviewerapi.celery worker --loglevel=info`
+Finally, start the worker process with `celery -A dataviewerapi.celery worker --loglevel=info`.
 
 Both of these processes can be started from PyCharm from the Python modules flask and celery, which enables easy debugging from the IDE. 
