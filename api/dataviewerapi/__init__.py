@@ -18,8 +18,7 @@ api = Api(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 cors = CORS(app)
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
+celery = Celery(app.name, backend=app.config['CELERY_RESULT_BACKEND'], broker=app.config['CELERY_BROKER_URL'])
 
 from .util import IntSetConverter, DateConverter
 

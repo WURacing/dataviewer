@@ -89,6 +89,7 @@ config.json
 
 /data
 
-.idea
+**/.idea/workspace.xml
+**/.idea/tasks.xml 
 __pycache__
 app.db
