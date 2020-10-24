@@ -26,6 +26,19 @@ Flask has additional useful environment variables for development use, such as F
 
 This project has dotenv enabled, so these settings can be stored in a .env file in the project directory for easy storage during development.
 
+Development in PyCharm
+===
+
+Download this entire Git repository, and open the api/ project contained inside using PyCharm Professional.
+
+In PyCharm's [run/debug configurations](https://www.jetbrains.com/help/pycharm/creating-and-editing-run-debug-configurations.html), create a new Flask server called "Run Web Server". Set the target type to Module name, set the target to dataviewerapi. Open the environment variables table (right button) and add FLASK_RUN_PORT with a value of 3001, and add DBC with the path to the car network description file (Clone https://github.com/wuracing/dbc somewhere, grab the full file path to DBC/dbc/2019.2.1.dbc for example, and then add an environment variable DBC with a value of that full file path).
+
+Next, add another run/debug configuration type Python called "Celery Worker" with target to run being module, Module name being celery, parameters being `-A dataviewerapi.celery worker --loglevel=INFO -P gevent`. Add an environment variable for the DBC file as described above.
+
+To initialize our local database, add another one-off run/debug configuration type Python called "DB Upgrade". Set module name flask, parameters db upgrade, environment variables FLASK_APP with a value of dataviewerapi.
+
+To start the web server, first run the DB Upgrade configuration. This will run and exit, check that there were no errors. Then start both "Run Web Server" and "Celery Worker". Your server should then be listening on http://localhost:3001/
+
 Running
 ===
 
