@@ -56,9 +56,12 @@ def parse_packets(file):
     reader = csv.DictReader(file)
     for row in reader:
         # Read timestamp assuming spring 2019 raw CSV format
-        ts = datetime.datetime(int(row["year"]), int(row["month"]), int(row["day"]),
-                               int(row["hour"]), int(row["min"]), int(row["sec"]),
-                               int(row["ms"]) * 1000, tzinfo=cdt)
+        try:
+            ts = datetime.datetime(int(row["year"]), int(row["month"]), int(row["day"]),
+                                   int(row["hour"]), int(row["min"]), int(row["sec"]),
+                                   int(row["ms"]) * 1000, tzinfo=cdt)
+        except ValueError:
+            ts = datetime.datetime.now()
         # Read CAN (meta)data and store as bytes
         frame_id = binascii.unhexlify(row["id"])
         data = binascii.unhexlify(row["data"])
