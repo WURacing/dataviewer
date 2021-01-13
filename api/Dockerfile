@@ -1,11 +1,14 @@
 FROM python:3.8-slim
 
-RUN apt-get update && apt-get install -y redis-server \
+RUN apt-get update && apt-get install -y libmariadb3 redis-server \
     && rm -rf /var/cache/apt/lists/*
 
 WORKDIR /api
 ADD requirements.txt /api/requirements.txt
-RUN pip install -r requirements.txt && pip install supervisor
+RUN apt-get update && apt-get install -y build-essential libmariadb-dev \
+	&& pip install -r requirements.txt && pip install supervisor \
+	&& apt-get remove --auto-remove -y libmariadb-dev build-essential \
+    && rm -rf /var/cache/apt/lists/*
 
 ADD . /api
 ARG DBC_VER=2020.1.0

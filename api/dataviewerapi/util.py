@@ -1,6 +1,7 @@
 from typing import List
 
 import dateutil.parser
+import datetime
 from flask_restful import abort
 from sympy import sympify, SympifyError
 
@@ -18,12 +19,32 @@ class IntSetConverter(BaseConverter):
         return ','.join(str(value) for value in values)
 
 
-class DateConverter(BaseConverter):
+class DateTimeConverter(BaseConverter):
     def to_python(self, value):
         return dateutil.parser.isoparse(value)
 
     def to_url(self, value):
         return value.isoformat()
+
+
+# Naïve date / time converters
+
+class DateConverter(BaseConverter):
+    def to_python(self, value):
+        # return datetime.date.fromisoformat(value)
+        return dateutil.parser.isoparse(value).date()
+
+    def to_url(self, value):
+        return value.isoformat()
+
+
+class TimeConverter(BaseConverter):
+    def to_python(self, value):
+        return datetime.time.fromisoformat(value)
+
+    def to_url(self, value):
+        return value.isoformat()
+
 
 
 def validate_run_location(args):
