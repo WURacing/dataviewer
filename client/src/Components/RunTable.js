@@ -13,6 +13,8 @@ import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import Collapse from '@material-ui/core/Collapse';
 import IconButton from '@material-ui/core/IconButton';
+import GetAppIcon from '@material-ui/icons/GetApp';
+import Button from '@material-ui/core/Button';
 
 class RunTable extends React.Component{
     constructor(props){
@@ -84,7 +86,7 @@ class RunTable extends React.Component{
         var start = this.tConvert(startTime)
         var endTime = interval.end.slice(0, 8)
         var end = this.tConvert(endTime)
-        var apiLink = "https://data.washuracing.com/api/v2/testing" + testingDate + "/" + interval.id.toString() + '/data.csv';
+        var apiLink = "https://data.washuracing.com/api/v2/testing/" + testingDate + "/" + interval.start + '/' + interval.end + '/data.csv';
         return({
             intervalStart: start, 
             intervalEnd: end, 
@@ -106,7 +108,7 @@ class RunTable extends React.Component{
         var apiLink = "https://data.washuracing.com/api/v2/testing/" + run.date + '/' + run.start + '/' + run.end +'/data.csv'
 
         run.intervals.forEach(interval => {
-            intervalRows.push(this.createIntervalRow(interval))
+            intervalRows.push(this.createIntervalRow(interval, run.date))
         });
 
         return(
@@ -122,7 +124,18 @@ class RunTable extends React.Component{
                     <TableCell>{run.location}</TableCell>
                     <TableCell>{start}</TableCell>
                     <TableCell>{end}</TableCell>
-                    <TableCell><a href={apiLink}>{apiLink}</a></TableCell>
+                    <TableCell>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        className={classes.button}
+                        startIcon={<GetAppIcon />}
+                        href ={apiLink}
+                    >
+                        Save
+                    </Button>
+                    </TableCell>
                 </TableRow>
                 <TableRow>
                     <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -134,9 +147,10 @@ class RunTable extends React.Component{
                             <Table size ='small'>
                                 <TableHead>
                                     <TableRow>
+                                        <TableCell>Description</TableCell>
                                         <TableCell>Start Time</TableCell>
                                         <TableCell>End Time</TableCell>
-                                        <TableCell>Description</TableCell>
+                                        <TableCell>Download</TableCell>
                                     </TableRow>  
                                 </TableHead>
                                 <TableBody>
@@ -145,7 +159,19 @@ class RunTable extends React.Component{
                                         <TableCell component="th" scope="row">{interval.intervalDescription}</TableCell>
                                         <TableCell>{interval.intervalStart}</TableCell>
                                         <TableCell>{interval.intervalEnd}</TableCell>
-                                        <TableCell>{interval.intervalApiLink}</TableCell>
+                                        <TableCell>
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                size="small"
+                                                className={classes.button}
+                                                startIcon={<GetAppIcon />}
+                                                href ={interval.intervalApiLink}
+                                            >
+                                                Save
+                                            </Button>
+                                            
+                                        </TableCell>
                                     </TableRow>
                                      ))}
                                 </TableBody>
