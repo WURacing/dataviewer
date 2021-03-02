@@ -1,13 +1,10 @@
 import logo from './logo.svg';
 import './App.css';
-import AppBar from './Components/AppBar'
-import RunGrid from './Components/RunGrid'
-
+import RunTable from './Components/RunTable'
 function App() {
   return (
     <div className="AppBar">
-      <AppBar/> 
-      <RunGrid/>      
+      <RunTable apiPath = "https://data.washuracing.com/api/v2/testing"></RunTable>     
     </div>
   );
 }
